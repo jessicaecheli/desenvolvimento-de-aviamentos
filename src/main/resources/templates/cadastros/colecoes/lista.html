@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title>Coleções</title></head>
+<body>
+<main th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-collection"></i> Coleções</h2>
+        <a href="/colecoes/nova" class="btn btn-primary"><i class="bi bi-plus"></i> Nova Coleção</a>
+    </div>
+    <div class="card shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr><th>#</th><th>Nome</th><th>Ano</th><th class="text-end">Ações</th></tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(colecoes)}">
+                    <td colspan="4" class="text-center text-muted py-3">Nenhuma coleção cadastrada.</td>
+                </tr>
+                <tr th:each="c : ${colecoes}">
+                    <td th:text="${c.id}"></td>
+                    <td th:text="${c.nome}"></td>
+                    <td th:text="${c.ano}"></td>
+                    <td class="text-end">
+                        <a th:href="@{/colecoes/{id}/editar(id=${c.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form th:action="@{/colecoes/{id}/excluir(id=${c.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('Excluir coleção?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

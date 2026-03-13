@@ -1,0 +1,54 @@
+package com.example.projeto.dto;
+
+import com.example.projeto.entity.StatusDesenvolvimento;
+
+import java.util.List;
+import java.util.Map;
+
+public class DashboardDTO {
+
+    private Map<String, Long> totalPorColecao;
+    private Map<StatusDesenvolvimento, Long> totalPorStatus;
+    private long totalAprovados;
+    private long totalCancelados;
+    private long totalComAlteracao;
+    private List<AtrasadoDTO> atrasados;
+    private Map<String, Double> leadtimeMediaPorEtapa;
+
+    public static class AtrasadoDTO {
+        private String codigo;
+        private String descricao;
+        private String colecao;
+        private String categoria;
+        private long diasAtraso;
+
+        public AtrasadoDTO(String codigo, String descricao, String colecao, String categoria, long diasAtraso) {
+            this.codigo = codigo;
+            this.descricao = descricao;
+            this.colecao = colecao;
+            this.categoria = categoria;
+            this.diasAtraso = diasAtraso;
+        }
+
+        public String getCodigo() { return codigo; }
+        public String getDescricao() { return descricao; }
+        public String getColecao() { return colecao; }
+        public String getCategoria() { return categoria; }
+        public long getDiasAtraso() { return diasAtraso; }
+    }
+
+    public Map<String, Long> getTotalPorColecao() { return totalPorColecao; }
+    public void setTotalPorColecao(Map<String, Long> totalPorColecao) { this.totalPorColecao = totalPorColecao; }
+    public Map<StatusDesenvolvimento, Long> getTotalPorStatus() { return totalPorStatus; }
+    public void setTotalPorStatus(Map<StatusDesenvolvimento, Long> totalPorStatus) { this.totalPorStatus = totalPorStatus; }
+    public long getTotalAprovados() { return totalAprovados; }
+    public void setTotalAprovados(long totalAprovados) { this.totalAprovados = totalAprovados; }
+    public long getTotalCancelados() { return totalCancelados; }
+    public void setTotalCancelados(long totalCancelados) { this.totalCancelados = totalCancelados; }
+    public long getTotalComAlteracao() { return totalComAlteracao; }
+    public void setTotalComAlteracao(long totalComAlteracao) { this.totalComAlteracao = totalComAlteracao; }
+    public List<AtrasadoDTO> getAtrasados() { return atrasados; }
+    public void setAtrasados(List<AtrasadoDTO> atrasados) { this.atrasados = atrasados; }
+    public Map<String, Double> getLeadtimeMediaPorEtapa() { return leadtimeMediaPorEtapa; }
+    public void setLeadtimeMediaPorEtapa(Map<String, Double> leadtimeMediaPorEtapa) { this.leadtimeMediaPorEtapa = leadtimeMediaPorEtapa; }
+}
