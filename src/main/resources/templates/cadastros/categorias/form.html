@@ -10,7 +10,7 @@
             <input type="hidden" name="id" th:value="${categoria.id}"/>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Nome</label>
-                <input type="text" name="nome" class="form-control" th:value="${categoria.nome}" required/>
+                <input type="text" name="nome" class="form-control uppercase-input" th:value="${categoria.nome}" required/>
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Prazo (dias úteis)</label>

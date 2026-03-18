@@ -29,8 +29,9 @@ public class DesenvolvimentoService {
         return desenvolvimentoRepository.findAll();
     }
 
-    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaId, StatusDesenvolvimento status) {
-        return desenvolvimentoRepository.findWithFilters(colecaoId, marcaId, categoriaId, status);
+    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaId, StatusDesenvolvimento status, String codigo) {
+        return desenvolvimentoRepository.findWithFilters(colecaoId, marcaId, categoriaId, status,
+            (codigo != null && !codigo.isBlank()) ? codigo.trim() : null);
     }
 
     public Desenvolvimento buscarPorId(Long id) {

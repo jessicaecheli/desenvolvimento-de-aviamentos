@@ -76,7 +76,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label fw-semibold">Observação</label>
-                            <textarea name="observacao" class="form-control" rows="2"></textarea>
+                            <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
                         </div>
                         <button class="btn btn-primary w-100">Registrar</button>
                     </form>
@@ -89,10 +89,11 @@
                 <div class="card-body p-2">
                     <div th:if="${#lists.isEmpty(orcamentos)}" class="text-muted small p-2">Nenhum orçamento.</div>
                     <table th:unless="${#lists.isEmpty(orcamentos)}" class="table table-sm mb-2">
-                        <thead><tr><th>Fornecedor</th><th>Valor</th><th>Qtd</th><th>Observação</th><th></th></tr></thead>
+                        <thead><tr><th>Fornecedor</th><th>Tamanho</th><th>Valor</th><th>Qtd</th><th>Observação</th><th></th></tr></thead>
                         <tbody>
                             <tr th:each="o : ${orcamentos}">
                                 <td th:text="${o.fornecedor}"></td>
+                                <td th:text="${o.tamanhosConcatenados}"></td>
                                 <td th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor,1,'COMMA',2,'POINT') : '-'}"></td>
                                 <td th:text="${o.quantidade}"></td>
                                 <td th:text="${o.observacao}"></td>
@@ -105,13 +106,25 @@
                                 </td>
                             </tr>
                             <tr th:each="o : ${orcamentos}">
-                                <td colspan="5" class="p-0">
+                                <td colspan="6" class="p-0">
                                     <div th:id="'editOrc' + ${o.id}" class="collapse p-2 bg-light">
                                         <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
                                               method="post" class="row g-1">
                                             <div class="col-12 col-sm-3">
-                                                <input type="text" name="fornecedor" class="form-control form-control-sm"
+                                                <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
                                                        th:value="${o.fornecedor}" placeholder="Fornecedor"/>
+                                            </div>
+                                            <div class="col-4 col-sm-1">
+                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
+                                                       th:value="${o.tamanho}" placeholder="T1"/>
+                                            </div>
+                                            <div class="col-4 col-sm-1">
+                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
+                                                       th:value="${o.tamanho2}" placeholder="T2"/>
+                                            </div>
+                                            <div class="col-4 col-sm-1">
+                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
+                                                       th:value="${o.tamanho3}" placeholder="T3"/>
                                             </div>
                                             <div class="col-6 col-sm-2">
                                                 <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
@@ -122,7 +135,7 @@
                                                        th:value="${o.quantidade}" placeholder="Qtd"/>
                                             </div>
                                             <div class="col-12 col-sm-3">
-                                                <input type="text" name="observacao" class="form-control form-control-sm"
+                                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
                                                        th:value="${o.observacao}" placeholder="Observação"/>
                                             </div>
                                             <div class="col-12 col-sm-2">
@@ -143,8 +156,24 @@
                             <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post">
                                 <div class="row g-1">
                                     <div class="col-12">
-                                        <input type="text" name="fornecedor" class="form-control form-control-sm"
+                                        <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
                                                placeholder="Fornecedor"/>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="row g-1">
+                                            <div class="col-4">
+                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
+                                                       placeholder="Tam. 1 (P, 38...)"/>
+                                            </div>
+                                            <div class="col-4">
+                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
+                                                       placeholder="Tam. 2"/>
+                                            </div>
+                                            <div class="col-4">
+                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
+                                                       placeholder="Tam. 3"/>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="col-6">
                                         <input type="number" name="valor" class="form-control form-control-sm"
@@ -155,7 +184,7 @@
                                                placeholder="Qtd"/>
                                     </div>
                                     <div class="col-12">
-                                        <textarea name="observacao" class="form-control form-control-sm"
+                                        <textarea name="observacao" class="form-control form-control-sm uppercase-input"
                                                   rows="2" placeholder="Observação"></textarea>
                                     </div>
                                     <div class="col-12">

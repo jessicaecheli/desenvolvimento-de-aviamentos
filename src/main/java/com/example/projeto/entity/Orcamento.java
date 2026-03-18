@@ -17,6 +17,10 @@ public class Orcamento {
 
     private String fornecedor;
 
+    private String tamanho;
+    private String tamanho2;
+    private String tamanho3;
+
     @Column(precision = 19, scale = 2)
     private BigDecimal valor;
 
@@ -32,6 +36,19 @@ public class Orcamento {
     public void setDesenvolvimento(Desenvolvimento desenvolvimento) { this.desenvolvimento = desenvolvimento; }
     public String getFornecedor() { return fornecedor; }
     public void setFornecedor(String fornecedor) { this.fornecedor = fornecedor; }
+    public String getTamanho() { return tamanho; }
+    public void setTamanho(String tamanho) { this.tamanho = tamanho; }
+    public String getTamanho2() { return tamanho2; }
+    public void setTamanho2(String tamanho2) { this.tamanho2 = tamanho2; }
+    public String getTamanho3() { return tamanho3; }
+    public void setTamanho3(String tamanho3) { this.tamanho3 = tamanho3; }
+    public String getTamanhosConcatenados() {
+        StringBuilder sb = new StringBuilder();
+        if (tamanho  != null && !tamanho.isBlank())  sb.append(tamanho);
+        if (tamanho2 != null && !tamanho2.isBlank()) { if (!sb.isEmpty()) sb.append(", "); sb.append(tamanho2); }
+        if (tamanho3 != null && !tamanho3.isBlank()) { if (!sb.isEmpty()) sb.append(", "); sb.append(tamanho3); }
+        return sb.toString();
+    }
     public BigDecimal getValor() { return valor; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
     public Integer getQuantidade() { return quantidade; }

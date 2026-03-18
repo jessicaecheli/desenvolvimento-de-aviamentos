@@ -22,12 +22,14 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
            "(:colecaoId IS NULL OR d.colecao.id = :colecaoId) AND " +
            "(:marcaId IS NULL OR d.marca.id = :marcaId) AND " +
            "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
-           "(:status IS NULL OR d.status = :status)")
+           "(:status IS NULL OR d.status = :status) AND " +
+           "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%')))")
     List<Desenvolvimento> findWithFilters(
         @Param("colecaoId") Long colecaoId,
         @Param("marcaId") Long marcaId,
         @Param("categoriaId") Long categoriaId,
-        @Param("status") StatusDesenvolvimento status
+        @Param("status") StatusDesenvolvimento status,
+        @Param("codigo") String codigo
     );
 
     List<Desenvolvimento> findByStatusIn(List<StatusDesenvolvimento> statuses);

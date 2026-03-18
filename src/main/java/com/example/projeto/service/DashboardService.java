@@ -5,8 +5,8 @@ import com.example.projeto.entity.*;
 import com.example.projeto.repository.DesenvolvimentoRepository;
 import com.example.projeto.repository.EtapaDesenvolvimentoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +26,14 @@ public class DashboardService {
     }
 
     public DashboardDTO gerarDashboard() {
-        List<Desenvolvimento> todos = desenvolvimentoRepository.findAll();
+        return gerarDashboard(null);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardDTO gerarDashboard(Long colecaoId) {
+        List<Desenvolvimento> todos = colecaoId != null
+            ? desenvolvimentoRepository.findByColecaoId(colecaoId)
+            : desenvolvimentoRepository.findAll();
         DashboardDTO dto = new DashboardDTO();
 
         // Total por coleção
@@ -68,22 +75,24 @@ public class DashboardService {
             .collect(Collectors.toList());
         dto.setAtrasados(atrasados);
 
-        // Leadtime médio por etapa (dias corridos entre etapas consecutivas)
-        Map<String, List<Long>> leadtimes = new LinkedHashMap<>();
+        // Leadtime médio por categoria (dias corridos da primeira à última etapa do desenvolvimento)
+        Map<String, List<Long>> leadtimesPorCategoria = new LinkedHashMap<>();
         for (Desenvolvimento dev : todos) {
+            if (dev.getCategoria() == null) continue;
             List<EtapaDesenvolvimento> etapas = etapaRepository
                 .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(dev.getId());
-            for (int i = 1; i < etapas.size(); i++) {
-                EtapaDesenvolvimento anterior = etapas.get(i - 1);
-                EtapaDesenvolvimento atual = etapas.get(i);
-                String chave = anterior.getTipo().name() + " → " + atual.getTipo().name();
-                long dias = ChronoUnit.DAYS.between(anterior.getDataOcorrencia(), atual.getDataOcorrencia());
-                leadtimes.computeIfAbsent(chave, k -> new ArrayList<>()).add(dias);
-            }
+            if (etapas.size() < 2) continue;
+            long dias = desenvolvimentoService.calcularDiasUteis(
+                etapas.get(0).getDataOcorrencia(),
+                etapas.get(etapas.size() - 1).getDataOcorrencia()
+            );
+            leadtimesPorCategoria
+                .computeIfAbsent(dev.getCategoria().getNome(), k -> new ArrayList<>())
+                .add(dias);
         }
         Map<String, Double> medias = new LinkedHashMap<>();
-        leadtimes.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
-        dto.setLeadtimeMediaPorEtapa(medias);
+        leadtimesPorCategoria.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
+        dto.setLeadtimeMediaPorCategoria(medias);
 
         return dto;
     }

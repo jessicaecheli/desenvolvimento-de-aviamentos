@@ -44,8 +44,9 @@ public class DesenvolvimentoController {
                         @RequestParam(required = false) Long marcaId,
                         @RequestParam(required = false) Long categoriaId,
                         @RequestParam(required = false) StatusDesenvolvimento status,
+                        @RequestParam(required = false) String codigo,
                         Model model) {
-        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaId, status);
+        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaId, status, codigo);
         model.addAttribute("desenvolvimentos", lista);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
@@ -55,6 +56,7 @@ public class DesenvolvimentoController {
         model.addAttribute("filtroMarcaId", marcaId);
         model.addAttribute("filtroCategoriaId", categoriaId);
         model.addAttribute("filtroStatus", status);
+        model.addAttribute("filtroCodigo", codigo);
         return "desenvolvimentos/lista";
     }
 
@@ -135,6 +137,9 @@ public class DesenvolvimentoController {
     @PostMapping("/{id}/orcamento")
     public String adicionarOrcamento(@PathVariable Long id,
                                       @RequestParam(required = false) String fornecedor,
+                                      @RequestParam(required = false) String tamanho,
+                                      @RequestParam(required = false) String tamanho2,
+                                      @RequestParam(required = false) String tamanho3,
                                       @RequestParam(required = false) BigDecimal valor,
                                       @RequestParam(required = false) Integer quantidade,
                                       @RequestParam(required = false) String observacao,
@@ -147,6 +152,9 @@ public class DesenvolvimentoController {
         Orcamento orc = new Orcamento();
         orc.setDesenvolvimento(dev);
         orc.setFornecedor(fornecedor);
+        orc.setTamanho(tamanho);
+        orc.setTamanho2(tamanho2);
+        orc.setTamanho3(tamanho3);
         orc.setValor(valor);
         orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
@@ -159,6 +167,9 @@ public class DesenvolvimentoController {
     public String editarOrcamento(@PathVariable Long devId,
                                    @PathVariable Long orcId,
                                    @RequestParam(required = false) String fornecedor,
+                                   @RequestParam(required = false) String tamanho,
+                                   @RequestParam(required = false) String tamanho2,
+                                   @RequestParam(required = false) String tamanho3,
                                    @RequestParam(required = false) BigDecimal valor,
                                    @RequestParam(required = false) Integer quantidade,
                                    @RequestParam(required = false) String observacao,
@@ -166,6 +177,9 @@ public class DesenvolvimentoController {
         Orcamento orc = orcamentoRepository.findById(orcId)
             .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado: " + orcId));
         orc.setFornecedor(fornecedor);
+        orc.setTamanho(tamanho);
+        orc.setTamanho2(tamanho2);
+        orc.setTamanho3(tamanho3);
         orc.setValor(valor);
         orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
