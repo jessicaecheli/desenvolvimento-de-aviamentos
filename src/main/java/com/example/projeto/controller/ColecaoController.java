@@ -37,8 +37,13 @@ public class ColecaoController {
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute Colecao colecao, RedirectAttributes ra) {
-        service.salvar(colecao);
-        ra.addFlashAttribute("sucesso", "Coleção salva com sucesso.");
+        try {
+            service.salvar(colecao);
+            ra.addFlashAttribute("sucesso", "Coleção salva com sucesso.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
+            return colecao.getId() == null ? "redirect:/colecoes/nova" : "redirect:/colecoes/" + colecao.getId() + "/editar";
+        }
         return "redirect:/colecoes";
     }
 

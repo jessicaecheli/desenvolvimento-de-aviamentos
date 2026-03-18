@@ -101,32 +101,36 @@
         </div>
     </div>
 
-    <!-- Atrasados -->
+    <!-- Atrasados e da semana -->
     <div class="card shadow-sm mt-4">
         <div class="card-header fw-semibold text-danger">
-            <i class="bi bi-clock-history"></i> Desenvolvimentos Atrasados
+            <i class="bi bi-clock-history"></i> Amostras para a Semana ou Atrasadas
         </div>
         <div th:if="${#lists.isEmpty(dashboard.atrasados)}" class="p-3 text-muted">
-            <i class="bi bi-check-circle text-success"></i> Nenhum desenvolvimento atrasado.
+            <i class="bi bi-check-circle text-success"></i> Nenhum desenvolvimento atrasado ou com entrega esta semana.
         </div>
         <table th:unless="${#lists.isEmpty(dashboard.atrasados)}" class="table table-hover mb-0">
-            <thead class="table-danger">
+            <thead class="table-light">
                 <tr>
                     <th>Código</th><th>Descrição</th><th>Coleção</th>
-                    <th>Categoria</th><th class="text-end">Dias de Atraso</th>
+                    <th>Categoria</th><th class="text-end">Prazo</th>
                 </tr>
             </thead>
             <tbody>
-                <tr th:each="a : ${dashboard.atrasados}">
+                <tr th:each="a : ${dashboard.atrasados}"
+                    th:classappend="${a.atrasado} ? 'table-danger' : 'table-warning'">
                     <td>
-                        <a th:href="@{/desenvolvimentos}" th:text="${a.codigo}"
+                        <a th:href="@{/desenvolvimentos/{id}(id=${a.id})}" th:text="${a.codigo}"
                            class="fw-semibold text-decoration-none"></a>
                     </td>
                     <td th:text="${a.descricao}"></td>
                     <td th:text="${a.colecao}"></td>
                     <td th:text="${a.categoria}"></td>
                     <td class="text-end">
-                        <span class="badge bg-danger fs-6" th:text="${a.diasAtraso} + ' d'"></span>
+                        <span th:if="${a.atrasado}" class="badge bg-danger"
+                              th:text="${a.diasAtraso} + ' d de atraso'"></span>
+                        <span th:unless="${a.atrasado}" class="badge bg-warning text-dark"
+                              th:text="${a.diasAtraso} + ' d restantes'"></span>
                     </td>
                 </tr>
             </tbody>

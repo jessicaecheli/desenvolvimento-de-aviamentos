@@ -9,59 +9,109 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <style>
         body { background-color: #f8f9fa; }
-        .navbar-brand { font-weight: 700; letter-spacing: 1px; }
         .badge-NOVO { background-color: #6c757d; }
         .badge-ORCAMENTO { background-color: #0d6efd; }
         .badge-AMOSTRA { background-color: #ffc107; color: #000; }
         .badge-ALTERACAO { background-color: #fd7e14; }
         .badge-APROVADO { background-color: #198754; }
         .badge-CANCELADO { background-color: #dc3545; }
+
+        #sidebar {
+            width: 230px;
+            min-height: 100vh;
+            background-color: #212529;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar .sidebar-brand {
+            padding: 1.25rem 1rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: #fff;
+            border-bottom: 1px solid #374151;
+            text-decoration: none;
+        }
+        #sidebar .nav-link {
+            color: #adb5bd;
+            padding: 0.6rem 1rem;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        #sidebar .nav-link:hover, #sidebar .nav-link.active {
+            color: #fff;
+            background-color: #374151;
+        }
+        #sidebar .nav-section {
+            padding: 0.75rem 1rem 0.25rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #6c757d;
+        }
+        #main-content {
+            margin-left: 230px;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+        @media (max-width: 768px) {
+            #sidebar { width: 100%; min-height: auto; position: relative; }
+            #main-content { margin-left: 0; }
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="/">
+<div class="d-flex">
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <a class="sidebar-brand" href="/">
             <i class="bi bi-scissors"></i> Aviamentos
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="nav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/"><i class="bi bi-speedometer2"></i> Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/desenvolvimentos"><i class="bi bi-list-check"></i> Desenvolvimentos</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-gear"></i> Cadastros
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/marcas">Marcas</a></li>
-                        <li><a class="dropdown-item" href="/colecoes">Coleções</a></li>
-                        <li><a class="dropdown-item" href="/categorias">Categorias</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <a class="btn btn-outline-light btn-sm" href="/h2-console" target="_blank">
+        <ul class="nav flex-column mt-2">
+            <li class="nav-item">
+                <a class="nav-link" href="/"><i class="bi bi-speedometer2"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/desenvolvimentos"><i class="bi bi-list-check"></i> Desenvolvimentos</a>
+            </li>
+            <li class="nav-item mt-2">
+                <div class="nav-section">Cadastros</div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/marcas"><i class="bi bi-tag"></i> Marcas</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/colecoes"><i class="bi bi-collection"></i> Coleções</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/categorias"><i class="bi bi-grid"></i> Categorias</a>
+            </li>
+        </ul>
+        <div class="mt-auto p-3">
+            <a class="btn btn-outline-secondary btn-sm w-100" href="/h2-console" target="_blank">
                 <i class="bi bi-database"></i> H2 Console
             </a>
         </div>
+    </nav>
+
+    <!-- Conteúdo principal -->
+    <div id="main-content" class="flex-grow-1">
+        <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> <span th:text="${sucesso}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> <span th:text="${erro}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:replace="${content}"><!-- page content --></div>
     </div>
-</nav>
-<div class="container pb-5">
-    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle"></i> <span th:text="${sucesso}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle"></i> <span th:text="${erro}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div th:replace="${content}"><!-- page content --></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -37,8 +37,13 @@ public class MarcaController {
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute Marca marca, RedirectAttributes ra) {
-        service.salvar(marca);
-        ra.addFlashAttribute("sucesso", "Marca salva com sucesso.");
+        try {
+            service.salvar(marca);
+            ra.addFlashAttribute("sucesso", "Marca salva com sucesso.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
+            return marca.getId() == null ? "redirect:/marcas/nova" : "redirect:/marcas/" + marca.getId() + "/editar";
+        }
         return "redirect:/marcas";
     }
 

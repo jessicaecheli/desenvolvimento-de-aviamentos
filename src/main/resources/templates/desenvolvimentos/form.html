@@ -30,7 +30,7 @@
                 <label class="form-label fw-semibold">Coleção</label>
                 <select name="colecaoId" class="form-select">
                     <option value="">-- selecione --</option>
-                    <option th:each="c : ${colecoes}" th:value="${c.id}" th:text="${c.nome}"
+                    <option th:each="c : ${colecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
                             th:selected="${desenvolvimento.colecao != null and desenvolvimento.colecao.id == c.id}"></option>
                 </select>
             </div>
@@ -40,6 +40,13 @@
                     <option value="">-- selecione --</option>
                     <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nome}"
                             th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.id == c.id}"></option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Status</label>
+                <select name="status" class="form-select">
+                    <option th:each="s : ${statusValues}" th:value="${s}" th:text="${s}"
+                            th:selected="${desenvolvimento.status == s}"></option>
                 </select>
             </div>
             <div class="d-flex gap-2">

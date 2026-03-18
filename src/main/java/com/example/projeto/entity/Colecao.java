@@ -23,4 +23,8 @@ public class Colecao {
     public void setNome(String nome) { this.nome = nome; }
     public Integer getAno() { return ano; }
     public void setAno(Integer ano) { this.ano = ano; }
+
+    public String getNomeCompleto() {
+        return nome + (ano != null ? " " + ano : "");
+    }
 }

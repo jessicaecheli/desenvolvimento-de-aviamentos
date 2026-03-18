@@ -64,6 +64,7 @@ public class DesenvolvimentoController {
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categorias", categoriaService.listarTodas());
+        model.addAttribute("statusValues", StatusDesenvolvimento.values());
         return "desenvolvimentos/form";
     }
 
@@ -74,6 +75,7 @@ public class DesenvolvimentoController {
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categorias", categoriaService.listarTodas());
+        model.addAttribute("statusValues", StatusDesenvolvimento.values());
         return "desenvolvimentos/form";
     }
 
@@ -83,6 +85,7 @@ public class DesenvolvimentoController {
                          @RequestParam(required = false) Long marcaId,
                          @RequestParam(required = false) Long colecaoId,
                          @RequestParam(required = false) Long categoriaId,
+                         @RequestParam(required = false) StatusDesenvolvimento status,
                          @RequestParam(required = false) Long id,
                          RedirectAttributes ra) {
         Desenvolvimento dev;
@@ -96,6 +99,7 @@ public class DesenvolvimentoController {
         if (marcaId != null) dev.setMarca(marcaService.buscarPorId(marcaId));
         if (colecaoId != null) dev.setColecao(colecaoService.buscarPorId(colecaoId));
         if (categoriaId != null) dev.setCategoria(categoriaService.buscarPorId(categoriaId));
+        if (status != null) dev.setStatus(status);
         service.salvar(dev);
         ra.addFlashAttribute("sucesso", "Desenvolvimento salvo com sucesso.");
         return "redirect:/desenvolvimentos";
@@ -106,13 +110,14 @@ public class DesenvolvimentoController {
         Desenvolvimento dev = service.buscarPorId(id);
         List<EtapaDesenvolvimento> etapas = etapaRepository
             .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
-        List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByNumeroAsc(id);
+        List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
         model.addAttribute("dev", dev);
         model.addAttribute("etapas", etapas);
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("tiposEtapa", TipoEtapa.values());
         model.addAttribute("atrasado", service.estaAtrasado(dev));
         model.addAttribute("diasAtraso", service.diasAtraso(dev));
+        model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
         return "desenvolvimentos/detalhe";
     }
 
@@ -129,21 +134,44 @@ public class DesenvolvimentoController {
 
     @PostMapping("/{id}/orcamento")
     public String adicionarOrcamento(@PathVariable Long id,
-                                      @RequestParam Integer numero,
                                       @RequestParam(required = false) String fornecedor,
                                       @RequestParam(required = false) BigDecimal valor,
                                       @RequestParam(required = false) Integer quantidade,
+                                      @RequestParam(required = false) String observacao,
                                       RedirectAttributes ra) {
+        if (orcamentoRepository.countByDesenvolvimentoId(id) >= 4) {
+            ra.addFlashAttribute("erro", "Limite de 4 orçamentos atingido.");
+            return "redirect:/desenvolvimentos/" + id;
+        }
         Desenvolvimento dev = service.buscarPorId(id);
         Orcamento orc = new Orcamento();
         orc.setDesenvolvimento(dev);
-        orc.setNumero(numero);
         orc.setFornecedor(fornecedor);
         orc.setValor(valor);
         orc.setQuantidade(quantidade);
+        orc.setObservacao(observacao);
         orcamentoRepository.save(orc);
-        ra.addFlashAttribute("sucesso", "Orçamento " + numero + " salvo.");
+        ra.addFlashAttribute("sucesso", "Orçamento salvo.");
         return "redirect:/desenvolvimentos/" + id;
+    }
+
+    @PostMapping("/{devId}/orcamento/{orcId}/editar")
+    public String editarOrcamento(@PathVariable Long devId,
+                                   @PathVariable Long orcId,
+                                   @RequestParam(required = false) String fornecedor,
+                                   @RequestParam(required = false) BigDecimal valor,
+                                   @RequestParam(required = false) Integer quantidade,
+                                   @RequestParam(required = false) String observacao,
+                                   RedirectAttributes ra) {
+        Orcamento orc = orcamentoRepository.findById(orcId)
+            .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado: " + orcId));
+        orc.setFornecedor(fornecedor);
+        orc.setValor(valor);
+        orc.setQuantidade(quantidade);
+        orc.setObservacao(observacao);
+        orcamentoRepository.save(orc);
+        ra.addFlashAttribute("sucesso", "Orçamento atualizado.");
+        return "redirect:/desenvolvimentos/" + devId;
     }
 
     @PostMapping("/{id}/excluir")

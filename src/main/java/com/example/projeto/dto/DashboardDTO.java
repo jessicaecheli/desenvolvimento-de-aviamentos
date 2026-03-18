@@ -16,25 +16,31 @@ public class DashboardDTO {
     private Map<String, Double> leadtimeMediaPorEtapa;
 
     public static class AtrasadoDTO {
+        private Long id;
         private String codigo;
         private String descricao;
         private String colecao;
         private String categoria;
         private long diasAtraso;
+        private boolean atrasado;
 
-        public AtrasadoDTO(String codigo, String descricao, String colecao, String categoria, long diasAtraso) {
+        public AtrasadoDTO(Long id, String codigo, String descricao, String colecao, String categoria, long diasAtraso, boolean atrasado) {
+            this.id = id;
             this.codigo = codigo;
             this.descricao = descricao;
             this.colecao = colecao;
             this.categoria = categoria;
             this.diasAtraso = diasAtraso;
+            this.atrasado = atrasado;
         }
 
+        public Long getId() { return id; }
         public String getCodigo() { return codigo; }
         public String getDescricao() { return descricao; }
         public String getColecao() { return colecao; }
         public String getCategoria() { return categoria; }
         public long getDiasAtraso() { return diasAtraso; }
+        public boolean isAtrasado() { return atrasado; }
     }
 
     public Map<String, Long> getTotalPorColecao() { return totalPorColecao; }

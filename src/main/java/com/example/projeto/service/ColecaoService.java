@@ -24,6 +24,10 @@ public class ColecaoService {
     }
 
     public Colecao salvar(Colecao colecao) {
+        Long excludeId = colecao.getId() != null ? colecao.getId() : 0L;
+        if (repository.existsByNomeIgnoreCaseAndAnoAndIdNot(colecao.getNome(), colecao.getAno(), excludeId)) {
+            throw new IllegalArgumentException("Já existe uma coleção com este nome e ano.");
+        }
         return repository.save(colecao);
     }
 

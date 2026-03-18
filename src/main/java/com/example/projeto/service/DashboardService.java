@@ -33,7 +33,7 @@ public class DashboardService {
         Map<String, Long> porColecao = todos.stream()
             .filter(d -> d.getColecao() != null)
             .collect(Collectors.groupingBy(
-                d -> d.getColecao().getNome() + " " + (d.getColecao().getAno() != null ? d.getColecao().getAno() : ""),
+                d -> d.getColecao().getNomeCompleto(),
                 Collectors.counting()
             ));
         dto.setTotalPorColecao(porColecao);
@@ -47,17 +47,24 @@ public class DashboardService {
         dto.setTotalCancelados(porStatus.getOrDefault(StatusDesenvolvimento.CANCELADO, 0L));
         dto.setTotalComAlteracao(porStatus.getOrDefault(StatusDesenvolvimento.ALTERACAO, 0L));
 
-        // Atrasados
+        // Atrasados e com entrega na semana
         List<DashboardDTO.AtrasadoDTO> atrasados = todos.stream()
-            .filter(desenvolvimentoService::estaAtrasado)
-            .map(d -> new DashboardDTO.AtrasadoDTO(
-                d.getCodigo(),
-                d.getDescricao(),
-                d.getColecao() != null ? d.getColecao().getNome() : "-",
-                d.getCategoria() != null ? d.getCategoria().getNome() : "-",
-                desenvolvimentoService.diasAtraso(d)
-            ))
-            .sorted(Comparator.comparingLong(DashboardDTO.AtrasadoDTO::getDiasAtraso).reversed())
+            .filter(d -> desenvolvimentoService.estaAtrasado(d) || desenvolvimentoService.venceEstaSemana(d))
+            .map(d -> {
+                boolean late = desenvolvimentoService.estaAtrasado(d);
+                long dias = late ? desenvolvimentoService.diasAtraso(d) : desenvolvimentoService.diasRestantes(d);
+                return new DashboardDTO.AtrasadoDTO(
+                    d.getId(),
+                    d.getCodigo(),
+                    d.getDescricao(),
+                    d.getColecao() != null ? d.getColecao().getNomeCompleto() : "-",
+                    d.getCategoria() != null ? d.getCategoria().getNome() : "-",
+                    dias,
+                    late
+                );
+            })
+            .sorted(Comparator.comparingInt((DashboardDTO.AtrasadoDTO a) -> a.isAtrasado() ? 0 : 1)
+                .thenComparingLong(a -> a.isAtrasado() ? -a.getDiasAtraso() : a.getDiasAtraso()))
             .collect(Collectors.toList());
         dto.setAtrasados(atrasados);
 

@@ -16,7 +16,7 @@
                 <label class="form-label fw-semibold">Coleção</label>
                 <select name="colecaoId" class="form-select">
                     <option value="">Todas</option>
-                    <option th:each="c : ${colecoes}" th:value="${c.id}" th:text="${c.nome}"
+                    <option th:each="c : ${colecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
                             th:selected="${filtroColecaoId != null and filtroColecaoId == c.id}"></option>
                 </select>
             </div>
@@ -70,7 +70,7 @@
                     </td>
                     <td th:text="${d.descricao}"></td>
                     <td th:text="${d.marca?.nome}"></td>
-                    <td th:text="${d.colecao?.nome}"></td>
+                    <td th:text="${d.colecao?.nomeCompleto}"></td>
                     <td th:text="${d.categoria?.nome}"></td>
                     <td>
                         <span th:class="'badge badge-' + ${d.status}" th:text="${d.status}"></span>

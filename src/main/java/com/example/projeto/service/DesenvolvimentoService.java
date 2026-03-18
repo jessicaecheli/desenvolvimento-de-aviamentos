@@ -93,6 +93,24 @@ public class DesenvolvimentoService {
         return Math.max(0, diasUteis - dev.getCategoria().getPrazoDiasUteis());
     }
 
+    public long diasRestantes(Desenvolvimento dev) {
+        Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
+            .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
+        if (primeiraAmostra.isEmpty()) return Long.MAX_VALUE;
+        long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
+        return dev.getCategoria().getPrazoDiasUteis() - diasUteis;
+    }
+
+    public boolean venceEstaSemana(Desenvolvimento dev) {
+        if (dev.getStatus() != StatusDesenvolvimento.AMOSTRA &&
+            dev.getStatus() != StatusDesenvolvimento.ALTERACAO) {
+            return false;
+        }
+        if (estaAtrasado(dev)) return false;
+        long restantes = diasRestantes(dev);
+        return restantes >= 0 && restantes <= 5;
+    }
+
     public long calcularDiasUteis(LocalDate inicio, LocalDate fim) {
         long dias = 0;
         LocalDate data = inicio;

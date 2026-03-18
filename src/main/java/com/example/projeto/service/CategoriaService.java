@@ -24,6 +24,10 @@ public class CategoriaService {
     }
 
     public Categoria salvar(Categoria categoria) {
+        Long excludeId = categoria.getId() != null ? categoria.getId() : 0L;
+        if (repository.existsByNomeIgnoreCaseAndIdNot(categoria.getNome(), excludeId)) {
+            throw new IllegalArgumentException("Já existe uma categoria com este nome.");
+        }
         return repository.save(categoria);
     }
 

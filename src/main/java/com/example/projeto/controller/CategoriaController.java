@@ -37,8 +37,13 @@ public class CategoriaController {
 
     @PostMapping("/salvar")
     public String salvar(@ModelAttribute Categoria categoria, RedirectAttributes ra) {
-        service.salvar(categoria);
-        ra.addFlashAttribute("sucesso", "Categoria salva com sucesso.");
+        try {
+            service.salvar(categoria);
+            ra.addFlashAttribute("sucesso", "Categoria salva com sucesso.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
+            return categoria.getId() == null ? "redirect:/categorias/nova" : "redirect:/categorias/" + categoria.getId() + "/editar";
+        }
         return "redirect:/categorias";
     }
 

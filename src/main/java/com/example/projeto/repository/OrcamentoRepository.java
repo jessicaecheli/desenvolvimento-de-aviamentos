@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
 
-    List<Orcamento> findByDesenvolvimentoIdOrderByNumeroAsc(Long desenvolvimentoId);
+    List<Orcamento> findByDesenvolvimentoIdOrderByIdAsc(Long desenvolvimentoId);
+
+    long countByDesenvolvimentoId(Long desenvolvimentoId);
 }

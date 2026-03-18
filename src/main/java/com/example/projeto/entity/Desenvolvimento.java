@@ -32,7 +32,7 @@ public class Desenvolvimento {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatusDesenvolvimento status = StatusDesenvolvimento.NOVO;
+    private StatusDesenvolvimento status = StatusDesenvolvimento.ORCAMENTO;
 
     @Column(name = "data_criacao", nullable = false)
     private LocalDate dataCriacao = LocalDate.now();
@@ -42,7 +42,7 @@ public class Desenvolvimento {
     private List<EtapaDesenvolvimento> etapas = new ArrayList<>();
 
     @OneToMany(mappedBy = "desenvolvimento", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("numero ASC")
+    @OrderBy("id ASC")
     private List<Orcamento> orcamentos = new ArrayList<>();
 
     public Desenvolvimento() {}

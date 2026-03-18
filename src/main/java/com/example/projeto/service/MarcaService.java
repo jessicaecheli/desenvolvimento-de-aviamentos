@@ -24,6 +24,10 @@ public class MarcaService {
     }
 
     public Marca salvar(Marca marca) {
+        Long excludeId = marca.getId() != null ? marca.getId() : 0L;
+        if (repository.existsByNomeIgnoreCaseAndIdNot(marca.getNome(), excludeId)) {
+            throw new IllegalArgumentException("Já existe uma marca com este nome.");
+        }
         return repository.save(marca);
     }
 
