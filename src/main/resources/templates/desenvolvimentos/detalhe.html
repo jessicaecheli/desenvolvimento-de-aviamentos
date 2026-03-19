@@ -51,6 +51,10 @@
                                 <div class="text-muted small" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM')}"></div>
                             </div>
                             <div>
+                                <div th:if="${e.orcamento != null}" class="small fw-semibold">
+                                    <i class="bi bi-building"></i>
+                                    <span th:text="${e.orcamento.fornecedor ?: '(sem fornecedor)'}"></span>
+                                </div>
                                 <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
                                 <div th:if="${e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
@@ -98,6 +102,17 @@
                                         th:value="${t}" th:text="${t}"></option>
                             </select>
                         </div>
+                        <!-- Campo de fornecedor — aparece só para AMOSTRA, LIBERADA, APROVADO -->
+                        <div class="mb-2" id="campoOrcamento" style="display:none">
+                            <label class="form-label fw-semibold">Fornecedor da Amostra</label>
+                            <select name="orcamentoId" class="form-select form-select-sm">
+                                <option value="">(nenhum)</option>
+                                <option th:each="o : ${orcamentos}"
+                                        th:value="${o.id}"
+                                        th:text="${o.fornecedor != null ? o.fornecedor : '(sem fornecedor)'}">
+                                </option>
+                            </select>
+                        </div>
                         <div class="mb-2">
                             <label class="form-label fw-semibold">Data</label>
                             <input type="date" name="dataOcorrencia" class="form-control"
@@ -114,76 +129,108 @@
 
             <!-- Orçamentos -->
             <div class="card shadow-sm">
-                <div class="card-header fw-semibold"><i class="bi bi-currency-dollar"></i> Orçamentos</div>
+                <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-currency-dollar"></i> Orçamentos</span>
+                    <span class="badge bg-secondary" th:text="${totalOrcamentos} + '/4'"></span>
+                </div>
                 <div class="card-body p-2">
                     <div th:if="${#lists.isEmpty(orcamentos)}" class="text-muted small p-2">Nenhum orçamento.</div>
-                    <table th:unless="${#lists.isEmpty(orcamentos)}" class="table table-sm mb-2">
-                        <thead><tr><th>Fornecedor</th><th>Tamanho/Preço</th><th>Qtd</th><th>Observação</th><th></th></tr></thead>
-                        <tbody>
-                            <tr th:each="o : ${orcamentos}"
-                                th:class="${o.id == menorOrcamentoId ? 'table-success' : ''}">
-                                <td th:text="${o.fornecedor}"></td>
-                                <td th:text="${o.resumoTamanhos}"></td>
-                                <td th:text="${o.quantidade}"></td>
-                                <td th:text="${o.observacao}"></td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                    <div th:unless="${#lists.isEmpty(orcamentos)}" class="mb-2">
+                        <div th:each="o : ${orcamentos}"
+                             class="border rounded mb-2 overflow-hidden"
+                             th:classappend="${o.id == menorOrcamentoId} ? ' border-success' : ''">
+
+                            <!-- Header do mini-card -->
+                            <div class="px-2 py-1 d-flex justify-content-between align-items-center"
+                                 th:classappend="${o.id == menorOrcamentoId} ? ' bg-success-subtle' : ' bg-light'">
+                                <span class="fw-semibold small" th:text="${o.fornecedor ?: '(sem fornecedor)'}"></span>
+                                <div class="d-flex gap-1 align-items-center">
+                                    <span th:if="${o.id == menorOrcamentoId}"
+                                          class="badge bg-success" style="font-size:0.65rem">
+                                        <i class="bi bi-star-fill"></i> Melhor
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1"
                                             data-bs-toggle="collapse"
                                             th:data-bs-target="'#editOrc' + ${o.id}">
-                                        <i class="bi bi-pencil"></i>
+                                        <i class="bi bi-pencil" style="font-size:0.7rem"></i>
                                     </button>
-                                </td>
-                            </tr>
-                            <tr th:each="o : ${orcamentos}">
-                                <td colspan="5" class="p-0">
-                                    <div th:id="'editOrc' + ${o.id}" class="collapse p-2 bg-light">
-                                        <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
-                                              method="post" class="row g-1">
-                                            <div class="col-12">
-                                                <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.fornecedor}" placeholder="Fornecedor"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho}" placeholder="Tam. 1"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
-                                                       th:value="${o.valor}" placeholder="Preço T1"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho2}" placeholder="Tam. 2"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
-                                                       th:value="${o.valor2}" placeholder="Preço T2"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho3}" placeholder="Tam. 3"/>
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
-                                                       th:value="${o.valor3}" placeholder="Preço T3"/>
-                                            </div>
-                                            <div class="col-12">
-                                                <input type="number" name="quantidade" class="form-control form-control-sm"
-                                                       th:value="${o.quantidade}" placeholder="Qtd"/>
-                                            </div>
-                                            <div class="col-12">
-                                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.observacao}" placeholder="Observação"/>
-                                            </div>
-                                            <div class="col-12">
-                                                <button class="btn btn-sm btn-primary w-100">Salvar</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Corpo: tamanhos e preços -->
+                            <div class="px-2 pt-1">
+                                <div th:if="${o.tamanho != null}" class="d-flex justify-content-between small">
+                                    <span class="text-muted" th:text="${o.tamanho}"></span>
+                                    <span class="fw-semibold"
+                                          th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                </div>
+                                <div th:if="${o.tamanho2 != null}" class="d-flex justify-content-between small">
+                                    <span class="text-muted" th:text="${o.tamanho2}"></span>
+                                    <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                </div>
+                                <div th:if="${o.tamanho3 != null}" class="d-flex justify-content-between small">
+                                    <span class="text-muted" th:text="${o.tamanho3}"></span>
+                                    <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                </div>
+                            </div>
+
+                            <!-- Rodapé: qtd e observação -->
+                            <div th:if="${o.quantidade != null or (o.observacao != null and !o.observacao.isEmpty())}"
+                                 class="px-2 pb-1 pt-0 d-flex gap-2 small text-muted">
+                                <span th:if="${o.quantidade != null}">Qtd: <strong th:text="${o.quantidade}"></strong></span>
+                                <span th:if="${o.observacao != null and !o.observacao.isEmpty()}"
+                                      class="text-truncate" th:text="${o.observacao}"></span>
+                            </div>
+
+                            <!-- Collapse de edição -->
+                            <div th:id="'editOrc' + ${o.id}" class="collapse border-top">
+                                <div class="p-2 bg-light">
+                                    <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
+                                          method="post" class="row g-1">
+                                        <div class="col-12">
+                                            <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
+                                                   th:value="${o.fornecedor}" placeholder="Fornecedor"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
+                                                   th:value="${o.tamanho}" placeholder="Tam. 1"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
+                                                   th:value="${o.valor}" placeholder="Preço T1"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
+                                                   th:value="${o.tamanho2}" placeholder="Tam. 2"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
+                                                   th:value="${o.valor2}" placeholder="Preço T2"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
+                                                   th:value="${o.tamanho3}" placeholder="Tam. 3"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
+                                                   th:value="${o.valor3}" placeholder="Preço T3"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="number" name="quantidade" class="form-control form-control-sm"
+                                                   th:value="${o.quantidade}" placeholder="Qtd"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
+                                                   th:value="${o.observacao}" placeholder="Observação"/>
+                                        </div>
+                                        <div class="col-12">
+                                            <button class="btn btn-sm btn-primary w-100">Salvar</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div th:if="${totalOrcamentos < 4}">
                         <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="collapse"
                                 data-bs-target="#formOrc">
@@ -242,6 +289,18 @@
             </div>
         </div>
     </div>
+    <script>
+    (function () {
+        const tiposComOrc = ['AMOSTRA', 'LIBERADA', 'APROVADO'];
+        const tipoSelect = document.querySelector('select[name="tipo"]');
+        const campoOrc   = document.getElementById('campoOrcamento');
+        function atualizar() {
+            campoOrc.style.display = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
+        }
+        tipoSelect.addEventListener('change', atualizar);
+        atualizar();
+    }());
+    </script>
 </main>
 </body>
 </html>

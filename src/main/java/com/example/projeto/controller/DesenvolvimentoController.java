@@ -13,7 +13,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/desenvolvimentos")
@@ -46,9 +49,30 @@ public class DesenvolvimentoController {
                         @RequestParam(required = false) Long categoriaId,
                         @RequestParam(required = false) StatusDesenvolvimento status,
                         @RequestParam(required = false) String codigo,
+                        @RequestParam(required = false) String fornecedor,
                         Model model) {
-        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaId, status, codigo);
+        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaId, status, codigo, fornecedor);
+
+        Set<StatusDesenvolvimento> statusComFornecedor = Set.of(
+            StatusDesenvolvimento.AMOSTRA, StatusDesenvolvimento.LIBERADA, StatusDesenvolvimento.APROVADO);
+        List<Long> idsComStatus = lista.stream()
+            .filter(d -> statusComFornecedor.contains(d.getStatus()))
+            .map(Desenvolvimento::getId)
+            .toList();
+        Map<Long, String> fornecedoresPorDev = new HashMap<>();
+        if (!idsComStatus.isEmpty()) {
+            List<EtapaDesenvolvimento> etapas = etapaRepository.findEtapasComOrcamentoPorDesenvolvimentos(
+                idsComStatus, List.of(TipoEtapa.AMOSTRA, TipoEtapa.LIBERADA, TipoEtapa.APROVADO));
+            for (EtapaDesenvolvimento e : etapas) {
+                Long devId = e.getDesenvolvimento().getId();
+                if (!fornecedoresPorDev.containsKey(devId) && e.getOrcamento() != null) {
+                    fornecedoresPorDev.put(devId, e.getOrcamento().getFornecedor());
+                }
+            }
+        }
+
         model.addAttribute("desenvolvimentos", lista);
+        model.addAttribute("fornecedoresPorDev", fornecedoresPorDev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categorias", categoriaService.listarTodas());
@@ -58,6 +82,7 @@ public class DesenvolvimentoController {
         model.addAttribute("filtroCategoriaId", categoriaId);
         model.addAttribute("filtroStatus", status);
         model.addAttribute("filtroCodigo", codigo);
+        model.addAttribute("filtroFornecedor", fornecedor);
         return "desenvolvimentos/lista";
     }
 
@@ -160,8 +185,10 @@ public class DesenvolvimentoController {
                                 @RequestParam TipoEtapa tipo,
                                 @RequestParam(required = false) String observacao,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataOcorrencia,
+                                @RequestParam(required = false) Long orcamentoId,
                                 RedirectAttributes ra) {
-        service.avancarEtapa(id, tipo, observacao, dataOcorrencia);
+        Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
+        service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento);
         ra.addFlashAttribute("sucesso", "Etapa registrada com sucesso.");
         return "redirect:/desenvolvimentos/" + id;
     }

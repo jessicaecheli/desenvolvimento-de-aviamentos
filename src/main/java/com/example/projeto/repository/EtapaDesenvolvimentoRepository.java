@@ -18,4 +18,11 @@ public interface EtapaDesenvolvimentoRepository extends JpaRepository<EtapaDesen
 
     @Query("SELECT COUNT(DISTINCT e.desenvolvimento.id) FROM EtapaDesenvolvimento e WHERE e.tipo = :tipo AND e.desenvolvimento.id IN :ids")
     long countDistinctByTipoAndDesenvolvimentoIds(@Param("tipo") TipoEtapa tipo, @Param("ids") Collection<Long> ids);
+
+    @Query("SELECT e FROM EtapaDesenvolvimento e WHERE e.desenvolvimento.id IN :ids " +
+           "AND e.tipo IN :tipos AND e.orcamento IS NOT NULL " +
+           "ORDER BY e.dataOcorrencia DESC, e.id DESC")
+    List<EtapaDesenvolvimento> findEtapasComOrcamentoPorDesenvolvimentos(
+        @Param("ids") List<Long> ids,
+        @Param("tipos") List<TipoEtapa> tipos);
 }

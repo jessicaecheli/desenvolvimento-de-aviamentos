@@ -48,8 +48,8 @@
         <div class="col-sm-6 col-lg-3">
             <div class="card shadow-sm border-0 bg-danger text-white h-100">
                 <div class="card-body">
-                    <div class="fs-2 fw-bold" th:text="${#lists.size(dashboard.atrasados)}">0</div>
-                    <div>Atrasados</div>
+                    <div class="fs-2 fw-bold" th:text="${dashboard.totalHistoricoAtrasados}">0</div>
+                    <div>Contador de Atrasos</div>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
         <!-- Por Coleção -->
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold"><i class="bi bi-collection"></i> Por Coleção</div>
+                <div class="card-header fw-semibold"><i class="bi bi-collection"></i> Qtd. Des. por Coleção</div>
                 <div class="card-body p-0">
                     <div th:if="${#maps.isEmpty(dashboard.totalPorColecao)}" class="p-3 text-muted">Sem dados.</div>
                     <table th:unless="${#maps.isEmpty(dashboard.totalPorColecao)}" class="table table-sm mb-0">

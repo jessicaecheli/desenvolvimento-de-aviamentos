@@ -14,6 +14,7 @@ public class DashboardDTO {
     private long totalComAlteracao;
     private List<AtrasadoDTO> atrasados;
     private Map<String, Double> leadtimeMediaPorCategoria;
+    private long totalHistoricoAtrasados;
 
     public static class AtrasadoDTO {
         private Long id;
@@ -57,4 +58,6 @@ public class DashboardDTO {
     public void setAtrasados(List<AtrasadoDTO> atrasados) { this.atrasados = atrasados; }
     public Map<String, Double> getLeadtimeMediaPorCategoria() { return leadtimeMediaPorCategoria; }
     public void setLeadtimeMediaPorCategoria(Map<String, Double> leadtimeMediaPorCategoria) { this.leadtimeMediaPorCategoria = leadtimeMediaPorCategoria; }
+    public long getTotalHistoricoAtrasados() { return totalHistoricoAtrasados; }
+    public void setTotalHistoricoAtrasados(long v) { this.totalHistoricoAtrasados = v; }
 }

@@ -27,6 +27,10 @@ public class EtapaDesenvolvimento {
     @Column(name = "numero_rodada")
     private Integer numeroRodada = 1;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "orcamento_id")
+    private Orcamento orcamento;
+
     public EtapaDesenvolvimento() {}
 
     public Long getId() { return id; }
@@ -41,4 +45,6 @@ public class EtapaDesenvolvimento {
     public void setObservacao(String observacao) { this.observacao = observacao; }
     public Integer getNumeroRodada() { return numeroRodada; }
     public void setNumeroRodada(Integer numeroRodada) { this.numeroRodada = numeroRodada; }
+    public Orcamento getOrcamento() { return orcamento; }
+    public void setOrcamento(Orcamento orcamento) { this.orcamento = orcamento; }
 }

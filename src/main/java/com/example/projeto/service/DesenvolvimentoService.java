@@ -29,9 +29,10 @@ public class DesenvolvimentoService {
         return desenvolvimentoRepository.findAll();
     }
 
-    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaId, StatusDesenvolvimento status, String codigo) {
+    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaId, StatusDesenvolvimento status, String codigo, String fornecedor) {
         return desenvolvimentoRepository.findWithFilters(colecaoId, marcaId, categoriaId, status,
-            (codigo != null && !codigo.isBlank()) ? codigo.trim() : null);
+            (codigo != null && !codigo.isBlank()) ? codigo.trim() : null,
+            (fornecedor != null && !fornecedor.isBlank()) ? fornecedor.trim() : null);
     }
 
     public Desenvolvimento buscarPorId(Long id) {
@@ -61,7 +62,7 @@ public class DesenvolvimentoService {
     }
 
     @Transactional
-    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia) {
+    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia, Orcamento orcamento) {
         Desenvolvimento dev = buscarPorId(id);
 
         EtapaDesenvolvimento etapa = new EtapaDesenvolvimento();
@@ -69,6 +70,7 @@ public class DesenvolvimentoService {
         etapa.setTipo(tipo);
         etapa.setObservacao(observacao);
         etapa.setDataOcorrencia(dataOcorrencia != null ? dataOcorrencia : LocalDate.now());
+        etapa.setOrcamento(orcamento);
 
         if (tipo == TipoEtapa.ALTERACAO) {
             long rodadas = dev.getEtapas().stream()

@@ -7,6 +7,7 @@ import com.example.projeto.repository.EtapaDesenvolvimentoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,6 +96,41 @@ public class DashboardService {
         Map<String, Double> medias = new LinkedHashMap<>();
         leadtimesPorCategoria.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
         dto.setLeadtimeMediaPorCategoria(medias);
+
+        // Histórico de atrasados (todos que já ultrapassaram o prazo na fase de amostra)
+        Set<TipoEtapa> faseAmostra = Set.of(TipoEtapa.AMOSTRA, TipoEtapa.ALTERACAO);
+        Set<StatusDesenvolvimento> statusFaseAmostra = Set.of(StatusDesenvolvimento.AMOSTRA, StatusDesenvolvimento.ALTERACAO);
+
+        long historicoAtrasados = 0;
+        for (Desenvolvimento dev : todos) {
+            if (dev.getCategoria() == null) continue;
+            List<EtapaDesenvolvimento> etapas = etapaRepository
+                .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(dev.getId());
+
+            Optional<EtapaDesenvolvimento> primeiraAmostra = etapas.stream()
+                .filter(e -> e.getTipo() == TipoEtapa.AMOSTRA)
+                .findFirst();
+            if (primeiraAmostra.isEmpty()) continue;
+
+            LocalDate inicio = primeiraAmostra.get().getDataOcorrencia();
+
+            LocalDate fim;
+            if (statusFaseAmostra.contains(dev.getStatus())) {
+                fim = LocalDate.now();
+            } else {
+                fim = etapas.stream()
+                    .filter(e -> e.getDataOcorrencia().isAfter(inicio) && !faseAmostra.contains(e.getTipo()))
+                    .map(EtapaDesenvolvimento::getDataOcorrencia)
+                    .findFirst()
+                    .orElse(LocalDate.now());
+            }
+
+            long diasUteis = desenvolvimentoService.calcularDiasUteis(inicio, fim);
+            if (diasUteis > dev.getCategoria().getPrazoDiasUteis()) {
+                historicoAtrasados++;
+            }
+        }
+        dto.setTotalHistoricoAtrasados(historicoAtrasados);
 
         return dto;
     }
