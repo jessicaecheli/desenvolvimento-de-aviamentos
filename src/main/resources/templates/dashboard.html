@@ -41,7 +41,7 @@
             <div class="card shadow-sm border-0 bg-warning h-100">
                 <div class="card-body">
                     <div class="fs-2 fw-bold" th:text="${dashboard.totalComAlteracao}">0</div>
-                    <div>Em Alteração</div>
+                    <div>Contador de Alterações</div>
                 </div>
             </div>
         </div>
@@ -105,7 +105,7 @@
                             <tr th:each="entry : ${dashboard.leadtimeMediaPorCategoria}">
                                 <td th:text="${entry.key}" class="small"></td>
                                 <td class="text-end fw-bold"
-                                    th:text="${#numbers.formatDecimal(entry.value,1,'COMMA',1,'DOT')}"></td>
+                                    th:text="${#numbers.formatDecimal(entry.value,1,'POINT',1,'COMMA')}"></td>
                             </tr>
                         </tbody>
                     </table>

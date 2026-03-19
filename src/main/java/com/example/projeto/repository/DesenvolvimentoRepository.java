@@ -23,7 +23,8 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
            "(:marcaId IS NULL OR d.marca.id = :marcaId) AND " +
            "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
            "(:status IS NULL OR d.status = :status) AND " +
-           "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%')))")
+           "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%'))) " +
+           "ORDER BY d.id DESC")
     List<Desenvolvimento> findWithFilters(
         @Param("colecaoId") Long colecaoId,
         @Param("marcaId") Long marcaId,

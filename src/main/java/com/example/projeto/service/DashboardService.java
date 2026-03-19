@@ -52,7 +52,9 @@ public class DashboardService {
 
         dto.setTotalAprovados(porStatus.getOrDefault(StatusDesenvolvimento.APROVADO, 0L));
         dto.setTotalCancelados(porStatus.getOrDefault(StatusDesenvolvimento.CANCELADO, 0L));
-        dto.setTotalComAlteracao(porStatus.getOrDefault(StatusDesenvolvimento.ALTERACAO, 0L));
+        List<Long> ids = todos.stream().map(Desenvolvimento::getId).collect(Collectors.toList());
+        dto.setTotalComAlteracao(ids.isEmpty() ? 0L
+            : etapaRepository.countDistinctByTipoAndDesenvolvimentoIds(TipoEtapa.ALTERACAO, ids));
 
         // Atrasados e com entrega na semana
         List<DashboardDTO.AtrasadoDTO> atrasados = todos.stream()

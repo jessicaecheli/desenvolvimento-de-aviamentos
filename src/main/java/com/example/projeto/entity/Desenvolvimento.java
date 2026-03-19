@@ -18,6 +18,10 @@ public class Desenvolvimento {
 
     private String descricao;
 
+    private String codigoSystextil1;
+    private String codigoSystextil2;
+    private String codigoSystextil3;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "marca_id")
     private Marca marca;
@@ -31,7 +35,7 @@ public class Desenvolvimento {
     private Categoria categoria;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(50)")
     private StatusDesenvolvimento status = StatusDesenvolvimento.ORCAMENTO;
 
     @Column(name = "data_criacao", nullable = false)
@@ -53,6 +57,12 @@ public class Desenvolvimento {
     public void setCodigo(String codigo) { this.codigo = codigo; }
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+    public String getCodigoSystextil1() { return codigoSystextil1; }
+    public void setCodigoSystextil1(String codigoSystextil1) { this.codigoSystextil1 = codigoSystextil1; }
+    public String getCodigoSystextil2() { return codigoSystextil2; }
+    public void setCodigoSystextil2(String codigoSystextil2) { this.codigoSystextil2 = codigoSystextil2; }
+    public String getCodigoSystextil3() { return codigoSystextil3; }
+    public void setCodigoSystextil3(String codigoSystextil3) { this.codigoSystextil3 = codigoSystextil3; }
     public Marca getMarca() { return marca; }
     public void setMarca(Marca marca) { this.marca = marca; }
     public Colecao getColecao() { return colecao; }

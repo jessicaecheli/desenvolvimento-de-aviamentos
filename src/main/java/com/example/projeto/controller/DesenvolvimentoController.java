@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 
 @Controller
@@ -89,6 +90,9 @@ public class DesenvolvimentoController {
                          @RequestParam(required = false) Long categoriaId,
                          @RequestParam(required = false) StatusDesenvolvimento status,
                          @RequestParam(required = false) Long id,
+                         @RequestParam(required = false) String codigoSystextil1,
+                         @RequestParam(required = false) String codigoSystextil2,
+                         @RequestParam(required = false) String codigoSystextil3,
                          RedirectAttributes ra) {
         Desenvolvimento dev;
         if (id != null) {
@@ -102,7 +106,14 @@ public class DesenvolvimentoController {
         if (colecaoId != null) dev.setColecao(colecaoService.buscarPorId(colecaoId));
         if (categoriaId != null) dev.setCategoria(categoriaService.buscarPorId(categoriaId));
         if (status != null) dev.setStatus(status);
-        service.salvar(dev);
+        dev.setCodigoSystextil1(codigoSystextil1);
+        dev.setCodigoSystextil2(codigoSystextil2);
+        dev.setCodigoSystextil3(codigoSystextil3);
+        if (id == null) {
+            service.criarNovo(dev);
+        } else {
+            service.salvar(dev);
+        }
         ra.addFlashAttribute("sucesso", "Desenvolvimento salvo com sucesso.");
         return "redirect:/desenvolvimentos";
     }
@@ -113,14 +124,35 @@ public class DesenvolvimentoController {
         List<EtapaDesenvolvimento> etapas = etapaRepository
             .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
         List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
+        Long menorOrcamentoId = orcamentos.stream()
+            .filter(o -> o.getValorMinimo() != null)
+            .min(Comparator.comparing(Orcamento::getValorMinimo))
+            .map(Orcamento::getId)
+            .orElse(null);
         model.addAttribute("dev", dev);
         model.addAttribute("etapas", etapas);
         model.addAttribute("orcamentos", orcamentos);
+        model.addAttribute("menorOrcamentoId", menorOrcamentoId);
         model.addAttribute("tiposEtapa", TipoEtapa.values());
         model.addAttribute("atrasado", service.estaAtrasado(dev));
         model.addAttribute("diasAtraso", service.diasAtraso(dev));
         model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
         return "desenvolvimentos/detalhe";
+    }
+
+    @PostMapping("/{id}/systextil")
+    public String salvarSystextil(@PathVariable Long id,
+                                   @RequestParam(required = false) String codigoSystextil1,
+                                   @RequestParam(required = false) String codigoSystextil2,
+                                   @RequestParam(required = false) String codigoSystextil3,
+                                   RedirectAttributes ra) {
+        Desenvolvimento dev = service.buscarPorId(id);
+        dev.setCodigoSystextil1(codigoSystextil1);
+        dev.setCodigoSystextil2(codigoSystextil2);
+        dev.setCodigoSystextil3(codigoSystextil3);
+        service.salvar(dev);
+        ra.addFlashAttribute("sucesso", "Código Systêxtil salvo.");
+        return "redirect:/desenvolvimentos/" + id;
     }
 
     @PostMapping("/{id}/avancar")
@@ -141,6 +173,8 @@ public class DesenvolvimentoController {
                                       @RequestParam(required = false) String tamanho2,
                                       @RequestParam(required = false) String tamanho3,
                                       @RequestParam(required = false) BigDecimal valor,
+                                      @RequestParam(required = false) BigDecimal valor2,
+                                      @RequestParam(required = false) BigDecimal valor3,
                                       @RequestParam(required = false) Integer quantidade,
                                       @RequestParam(required = false) String observacao,
                                       RedirectAttributes ra) {
@@ -156,9 +190,17 @@ public class DesenvolvimentoController {
         orc.setTamanho2(tamanho2);
         orc.setTamanho3(tamanho3);
         orc.setValor(valor);
+        orc.setValor2(valor2);
+        orc.setValor3(valor3);
         orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
         orcamentoRepository.save(orc);
+        EtapaDesenvolvimento etapaOrc = new EtapaDesenvolvimento();
+        etapaOrc.setDesenvolvimento(dev);
+        etapaOrc.setTipo(TipoEtapa.ORCAMENTO);
+        etapaOrc.setDataOcorrencia(LocalDate.now());
+        etapaOrc.setObservacao(fornecedor);
+        etapaRepository.save(etapaOrc);
         ra.addFlashAttribute("sucesso", "Orçamento salvo.");
         return "redirect:/desenvolvimentos/" + id;
     }
@@ -171,6 +213,8 @@ public class DesenvolvimentoController {
                                    @RequestParam(required = false) String tamanho2,
                                    @RequestParam(required = false) String tamanho3,
                                    @RequestParam(required = false) BigDecimal valor,
+                                   @RequestParam(required = false) BigDecimal valor2,
+                                   @RequestParam(required = false) BigDecimal valor3,
                                    @RequestParam(required = false) Integer quantidade,
                                    @RequestParam(required = false) String observacao,
                                    RedirectAttributes ra) {
@@ -181,6 +225,8 @@ public class DesenvolvimentoController {
         orc.setTamanho2(tamanho2);
         orc.setTamanho3(tamanho3);
         orc.setValor(valor);
+        orc.setValor2(valor2);
+        orc.setValor3(valor3);
         orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
         orcamentoRepository.save(orc);

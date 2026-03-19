@@ -45,6 +45,17 @@ public class DesenvolvimentoService {
     }
 
     @Transactional
+    public Desenvolvimento criarNovo(Desenvolvimento desenvolvimento) {
+        Desenvolvimento salvo = desenvolvimentoRepository.save(desenvolvimento);
+        EtapaDesenvolvimento etapaInclusao = new EtapaDesenvolvimento();
+        etapaInclusao.setDesenvolvimento(salvo);
+        etapaInclusao.setTipo(TipoEtapa.INCLUSAO);
+        etapaInclusao.setDataOcorrencia(LocalDate.now());
+        etapaRepository.save(etapaInclusao);
+        return salvo;
+    }
+
+    @Transactional
     public void excluir(Long id) {
         desenvolvimentoRepository.deleteById(id);
     }
@@ -127,11 +138,13 @@ public class DesenvolvimentoService {
 
     private StatusDesenvolvimento toStatus(TipoEtapa tipo) {
         return switch (tipo) {
+            case INCLUSAO -> throw new IllegalArgumentException("Tipo INCLUSAO não avança status");
             case ORCAMENTO -> StatusDesenvolvimento.ORCAMENTO;
             case AMOSTRA -> StatusDesenvolvimento.AMOSTRA;
             case ALTERACAO -> StatusDesenvolvimento.ALTERACAO;
             case APROVADO -> StatusDesenvolvimento.APROVADO;
             case CANCELADO -> StatusDesenvolvimento.CANCELADO;
+            case LIBERADA -> StatusDesenvolvimento.LIBERADA;
         };
     }
 }

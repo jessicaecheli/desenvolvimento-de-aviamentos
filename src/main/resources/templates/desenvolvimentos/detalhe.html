@@ -21,6 +21,11 @@
                 <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
                     (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
             </small>
+            <small th:if="${dev.codigoSystextil1 != null or dev.codigoSystextil2 != null or dev.codigoSystextil3 != null}"
+                   class="text-muted d-block">
+                Systêxtil:
+                <strong th:if="${dev.codigoSystextil1 != null}" th:text="${dev.codigoSystextil1}"></strong><span th:if="${dev.codigoSystextil1 != null and dev.codigoSystextil2 != null}"> / </span><strong th:if="${dev.codigoSystextil2 != null}" th:text="${dev.codigoSystextil2}"></strong><span th:if="${(dev.codigoSystextil1 != null or dev.codigoSystextil2 != null) and dev.codigoSystextil3 != null}"> / </span><strong th:if="${dev.codigoSystextil3 != null}" th:text="${dev.codigoSystextil3}"></strong>
+            </small>
         </div>
         <div class="d-flex gap-2">
             <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="btn btn-outline-secondary btn-sm">
@@ -57,8 +62,30 @@
             </div>
         </div>
 
-        <!-- Formulário Avançar Etapa -->
+        <!-- Formulário Código Systêxtil + Registrar Etapa + Orçamentos -->
         <div class="col-md-4">
+            <!-- Código Systêxtil -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-upc-scan"></i> Código Systêxtil</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/systextil(id=${dev.id})}" method="post">
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil1" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil1}" placeholder="Código 1"/>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil2" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil2}" placeholder="Código 2"/>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil3" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil3}" placeholder="Código 3"/>
+                        </div>
+                        <button class="btn btn-primary w-100">Salvar</button>
+                    </form>
+                </div>
+            </div>
+
             <div class="card shadow-sm mb-3">
                 <div class="card-header fw-semibold"><i class="bi bi-arrow-right-circle"></i> Registrar Etapa</div>
                 <div class="card-body">
@@ -66,7 +93,9 @@
                         <div class="mb-2">
                             <label class="form-label fw-semibold">Tipo</label>
                             <select name="tipo" class="form-select" required>
-                                <option th:each="t : ${tiposEtapa}" th:value="${t}" th:text="${t}"></option>
+                                <option th:each="t : ${tiposEtapa}"
+                                        th:if="${t.name() != 'INCLUSAO'}"
+                                        th:value="${t}" th:text="${t}"></option>
                             </select>
                         </div>
                         <div class="mb-2">
@@ -89,12 +118,12 @@
                 <div class="card-body p-2">
                     <div th:if="${#lists.isEmpty(orcamentos)}" class="text-muted small p-2">Nenhum orçamento.</div>
                     <table th:unless="${#lists.isEmpty(orcamentos)}" class="table table-sm mb-2">
-                        <thead><tr><th>Fornecedor</th><th>Tamanho</th><th>Valor</th><th>Qtd</th><th>Observação</th><th></th></tr></thead>
+                        <thead><tr><th>Fornecedor</th><th>Tamanho/Preço</th><th>Qtd</th><th>Observação</th><th></th></tr></thead>
                         <tbody>
-                            <tr th:each="o : ${orcamentos}">
+                            <tr th:each="o : ${orcamentos}"
+                                th:class="${o.id == menorOrcamentoId ? 'table-success' : ''}">
                                 <td th:text="${o.fornecedor}"></td>
-                                <td th:text="${o.tamanhosConcatenados}"></td>
-                                <td th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor,1,'COMMA',2,'POINT') : '-'}"></td>
+                                <td th:text="${o.resumoTamanhos}"></td>
                                 <td th:text="${o.quantidade}"></td>
                                 <td th:text="${o.observacao}"></td>
                                 <td>
@@ -106,39 +135,47 @@
                                 </td>
                             </tr>
                             <tr th:each="o : ${orcamentos}">
-                                <td colspan="6" class="p-0">
+                                <td colspan="5" class="p-0">
                                     <div th:id="'editOrc' + ${o.id}" class="collapse p-2 bg-light">
                                         <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
                                               method="post" class="row g-1">
-                                            <div class="col-12 col-sm-3">
+                                            <div class="col-12">
                                                 <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
                                                        th:value="${o.fornecedor}" placeholder="Fornecedor"/>
                                             </div>
-                                            <div class="col-4 col-sm-1">
+                                            <div class="col-6">
                                                 <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho}" placeholder="T1"/>
+                                                       th:value="${o.tamanho}" placeholder="Tam. 1"/>
                                             </div>
-                                            <div class="col-4 col-sm-1">
-                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho2}" placeholder="T2"/>
-                                            </div>
-                                            <div class="col-4 col-sm-1">
-                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
-                                                       th:value="${o.tamanho3}" placeholder="T3"/>
-                                            </div>
-                                            <div class="col-6 col-sm-2">
+                                            <div class="col-6">
                                                 <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
-                                                       th:value="${o.valor}" placeholder="Valor"/>
+                                                       th:value="${o.valor}" placeholder="Preço T1"/>
                                             </div>
-                                            <div class="col-6 col-sm-2">
+                                            <div class="col-6">
+                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
+                                                       th:value="${o.tamanho2}" placeholder="Tam. 2"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
+                                                       th:value="${o.valor2}" placeholder="Preço T2"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
+                                                       th:value="${o.tamanho3}" placeholder="Tam. 3"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
+                                                       th:value="${o.valor3}" placeholder="Preço T3"/>
+                                            </div>
+                                            <div class="col-12">
                                                 <input type="number" name="quantidade" class="form-control form-control-sm"
                                                        th:value="${o.quantidade}" placeholder="Qtd"/>
                                             </div>
-                                            <div class="col-12 col-sm-3">
+                                            <div class="col-12">
                                                 <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
                                                        th:value="${o.observacao}" placeholder="Observação"/>
                                             </div>
-                                            <div class="col-12 col-sm-2">
+                                            <div class="col-12">
                                                 <button class="btn btn-sm btn-primary w-100">Salvar</button>
                                             </div>
                                         </form>
@@ -159,27 +196,31 @@
                                         <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
                                                placeholder="Fornecedor"/>
                                     </div>
+                                    <div class="col-6">
+                                        <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
+                                               placeholder="Tam. 1 (P, 38...)"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
+                                               placeholder="Preço T1"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
+                                               placeholder="Tam. 2"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
+                                               placeholder="Preço T2"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
+                                               placeholder="Tam. 3"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
+                                               placeholder="Preço T3"/>
+                                    </div>
                                     <div class="col-12">
-                                        <div class="row g-1">
-                                            <div class="col-4">
-                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
-                                                       placeholder="Tam. 1 (P, 38...)"/>
-                                            </div>
-                                            <div class="col-4">
-                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
-                                                       placeholder="Tam. 2"/>
-                                            </div>
-                                            <div class="col-4">
-                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
-                                                       placeholder="Tam. 3"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" name="valor" class="form-control form-control-sm"
-                                               placeholder="Valor" step="0.01"/>
-                                    </div>
-                                    <div class="col-6">
                                         <input type="number" name="quantidade" class="form-control form-control-sm"
                                                placeholder="Qtd"/>
                                     </div>

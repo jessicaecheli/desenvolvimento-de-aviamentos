@@ -16,7 +16,7 @@ public class EtapaDesenvolvimento {
     private Desenvolvimento desenvolvimento;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(50)")
     private TipoEtapa tipo;
 
     @Column(name = "data_ocorrencia", nullable = false)

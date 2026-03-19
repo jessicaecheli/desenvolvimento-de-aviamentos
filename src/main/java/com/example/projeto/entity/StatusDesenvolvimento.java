@@ -6,5 +6,6 @@ public enum StatusDesenvolvimento {
     AMOSTRA,
     ALTERACAO,
     APROVADO,
-    CANCELADO
+    CANCELADO,
+    LIBERADA
 }
