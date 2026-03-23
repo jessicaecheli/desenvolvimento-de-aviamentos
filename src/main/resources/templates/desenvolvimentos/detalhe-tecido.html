@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title th:text="${dev.codigo}">Detalhe Tecido</title></head>
+<body>
+<main th:fragment="content">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2>
+                <span th:text="${dev.codigo}"></span>
+                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status}"></span>
+                <span th:if="${atrasado}" class="badge bg-danger ms-1">
+                    <i class="bi bi-clock-history"></i> Atrasado <span th:text="${diasAtraso}"></span>d
+                </span>
+                <span class="badge bg-secondary ms-1"><i class="bi bi-scissors"></i> Tecido</span>
+            </h2>
+            <p class="text-muted mb-0" th:text="${dev.descricao}"></p>
+            <small class="text-muted">
+                <span th:if="${dev.marca}">Marca: <strong th:text="${dev.marca.nome}"></strong> &nbsp;</span>
+                <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
+                <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
+                    (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
+            </small>
+            <small th:if="${dev.codigoSystextil1 != null or dev.codigoSystextil2 != null or dev.codigoSystextil3 != null}"
+                   class="text-muted d-block">
+                Systêxtil:
+                <strong th:if="${dev.codigoSystextil1 != null}" th:text="${dev.codigoSystextil1}"></strong><span th:if="${dev.codigoSystextil1 != null and dev.codigoSystextil2 != null}"> / </span><strong th:if="${dev.codigoSystextil2 != null}" th:text="${dev.codigoSystextil2}"></strong><span th:if="${(dev.codigoSystextil1 != null or dev.codigoSystextil2 != null) and dev.codigoSystextil3 != null}"> / </span><strong th:if="${dev.codigoSystextil3 != null}" th:text="${dev.codigoSystextil3}"></strong>
+            </small>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="/desenvolvimentos" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Timeline de Etapas -->
+        <div class="col-md-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-clock-history"></i> Histórico de Etapas</div>
+                <div class="card-body p-3">
+                    <div th:if="${#lists.isEmpty(etapas)}" class="text-muted">Nenhuma etapa registrada.</div>
+                    <div class="timeline">
+                        <div th:each="e : ${etapas}" class="d-flex gap-3 mb-3">
+                            <div class="text-center" style="min-width:40px">
+                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo}"></span>
+                                <div class="text-muted small" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM')}"></div>
+                            </div>
+                            <div>
+                                <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
+                                <div th:if="${e.numeroRodada > 1}" class="small text-muted">
+                                    Rodada <span th:text="${e.numeroRodada}"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel direito -->
+        <div class="col-md-7">
+
+            <!-- Dados do Tecido -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-scissors"></i> Dados do Tecido</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/tecido(id=${dev.id})}" method="post">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Cor / Estampa</label>
+                                <input type="text" name="corEstampa" class="form-control uppercase-input"
+                                       th:value="${dadosTecido.corEstampa}"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Unidade de Medida</label>
+                                <input type="text" name="unidadeMedida" class="form-control uppercase-input"
+                                       th:value="${dadosTecido.unidadeMedida}" placeholder="Ex: METRO, KG, ROLO"/>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Fornecedor</label>
+                                <select name="fornecedorId" class="form-select">
+                                    <option value="">(nenhum)</option>
+                                    <option th:each="f : ${fornecedores}"
+                                            th:value="${f.id}"
+                                            th:text="${f.nome}"
+                                            th:selected="${dadosTecido.fornecedor != null and dadosTecido.fornecedor.id == f.id}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Mínimo de Compra</label>
+                                <input type="number" name="minimoCompraQtd" step="0.01" class="form-control"
+                                       th:value="${dadosTecido.minimoCompraQtd}" placeholder="Ex: 50"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Unidade do Mínimo</label>
+                                <input type="text" name="minimoCompraUnidade" class="form-control uppercase-input"
+                                       th:value="${dadosTecido.minimoCompraUnidade}" placeholder="Ex: METROS"/>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Informações de Compra de Amostra</label>
+                                <textarea name="infoCompraAmostra" class="form-control uppercase-input" rows="3"
+                                          th:text="${dadosTecido.infoCompraAmostra}"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100">Salvar Dados do Tecido</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preço e Negociação -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-currency-dollar"></i> Preço e Negociação</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/tecido(id=${dev.id})}" method="post">
+                        <!-- campos ocultos para preservar os dados do Tecido ao salvar só preços -->
+                        <input type="hidden" name="corEstampa" th:value="${dadosTecido.corEstampa}"/>
+                        <input type="hidden" name="unidadeMedida" th:value="${dadosTecido.unidadeMedida}"/>
+                        <input type="hidden" name="fornecedorId"
+                               th:value="${dadosTecido.fornecedor != null ? dadosTecido.fornecedor.id : ''}"/>
+                        <input type="hidden" name="minimoCompraQtd" th:value="${dadosTecido.minimoCompraQtd}"/>
+                        <input type="hidden" name="minimoCompraUnidade" th:value="${dadosTecido.minimoCompraUnidade}"/>
+                        <input type="hidden" name="infoCompraAmostra" th:value="${dadosTecido.infoCompraAmostra}"/>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preço (R$)</label>
+                                <input type="number" name="preco" step="0.01" class="form-control" id="inputPreco"
+                                       th:value="${dadosTecido.preco}" placeholder="0,00"
+                                       oninput="calcReducao()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preço Negociado (R$)</label>
+                                <input type="number" name="precoNegociado" step="0.01" class="form-control" id="inputPrecoNeg"
+                                       th:value="${dadosTecido.precoNegociado}" placeholder="0,00"
+                                       oninput="calcReducao()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">% de Redução</label>
+                                <div class="input-group">
+                                    <input type="text" id="percentualReducao" class="form-control" readonly
+                                           th:value="${dadosTecido.percentualReducao != null ?
+                                               #numbers.formatDecimal(dadosTecido.percentualReducao, 1, 'POINT', 1, 'COMMA') : ''}"/>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Valor em Dólar (US$)</label>
+                                <input type="number" name="valorDolar" step="0.0001" class="form-control"
+                                       th:value="${dadosTecido.valorDolar}" placeholder="0,0000"/>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-primary w-100">Salvar Preço e Negociação</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Registrar Etapa -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-arrow-right-circle"></i> Registrar Etapa</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/avancar(id=${dev.id})}" method="post">
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Tipo</label>
+                            <select name="tipo" class="form-select">
+                                <option value="">-- selecione a etapa --</option>
+                                <option th:each="t : ${tiposEtapa}"
+                                        th:if="${t.name() != 'INCLUSAO'}"
+                                        th:value="${t}" th:text="${t}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Data</label>
+                            <input type="date" name="dataOcorrencia" class="form-control"
+                                   th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Observação</label>
+                            <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
+                        </div>
+                        <button class="btn btn-primary w-100">Registrar</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Código Systêxtil -->
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold"><i class="bi bi-upc-scan"></i> Código Systêxtil</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/systextil(id=${dev.id})}" method="post">
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil1" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil1}" placeholder="Código 1"/>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil2" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil2}" placeholder="Código 2"/>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" name="codigoSystextil3" class="form-control uppercase-input"
+                                   th:value="${dev.codigoSystextil3}" placeholder="Código 3"/>
+                        </div>
+                        <button class="btn btn-primary w-100">Salvar</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+    function calcReducao() {
+        const preco = parseFloat(document.getElementById('inputPreco').value) || 0;
+        const precoNeg = parseFloat(document.getElementById('inputPrecoNeg').value) || 0;
+        const campo = document.getElementById('percentualReducao');
+        if (preco > 0 && precoNeg >= 0) {
+            const pct = ((preco - precoNeg) / preco * 100).toFixed(1);
+            campo.value = pct.replace('.', ',');
+        } else {
+            campo.value = '';
+        }
+    }
+    </script>
+</main>
+</body>
+</html>

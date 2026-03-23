@@ -27,14 +27,26 @@ public class DashboardService {
     }
 
     public DashboardDTO gerarDashboard() {
-        return gerarDashboard(null);
+        return gerarDashboard(null, null);
+    }
+
+    public DashboardDTO gerarDashboard(Long colecaoId) {
+        return gerarDashboard(colecaoId, null);
     }
 
     @Transactional(readOnly = true)
-    public DashboardDTO gerarDashboard(Long colecaoId) {
+    public DashboardDTO gerarDashboard(Long colecaoId, Long categoriaMasterId) {
         List<Desenvolvimento> todos = colecaoId != null
             ? desenvolvimentoRepository.findByColecaoId(colecaoId)
             : desenvolvimentoRepository.findAll();
+
+        if (categoriaMasterId != null) {
+            todos = todos.stream()
+                .filter(d -> d.getCategoria() != null
+                    && d.getCategoria().getCategoriaPai() != null
+                    && d.getCategoria().getCategoriaPai().getId().equals(categoriaMasterId))
+                .collect(Collectors.toList());
+        }
         DashboardDTO dto = new DashboardDTO();
 
         // Total por coleção
@@ -78,7 +90,7 @@ public class DashboardService {
             .collect(Collectors.toList());
         dto.setAtrasados(atrasados);
 
-        // Leadtime médio por categoria (dias corridos da primeira à última etapa do desenvolvimento)
+        // Leadtime médio por categoria (dias úteis da primeira à última etapa do desenvolvimento)
         Map<String, List<Long>> leadtimesPorCategoria = new LinkedHashMap<>();
         for (Desenvolvimento dev : todos) {
             if (dev.getCategoria() == null) continue;

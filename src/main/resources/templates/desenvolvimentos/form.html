@@ -36,11 +36,21 @@
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Categoria</label>
-                <select name="categoriaId" class="form-select">
-                    <option value="">-- selecione --</option>
-                    <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nome}"
-                            th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.id == c.id}"></option>
+                <select id="selectMaster" class="form-select mb-2">
+                    <option value="">-- selecione a categoria --</option>
+                    <option th:each="m : ${categoriasMaster}" th:value="${m.id}" th:text="${m.nome}"
+                            th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.categoriaPai != null and desenvolvimento.categoria.categoriaPai.id == m.id}"></option>
                 </select>
+                <div id="wrapSubcategoria" style="display:none" class="mt-2">
+                    <select id="selectSubcategoria" name="categoriaId" class="form-select">
+                        <option value="">-- selecione a subcategoria --</option>
+                        <option th:each="s : ${subcategorias}"
+                                th:value="${s.id}"
+                                th:text="${s.nome}"
+                                th:attr="data-master=${s.categoriaPai.id}"
+                                th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.id == s.id}"></option>
+                    </select>
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
@@ -55,6 +65,36 @@
             </div>
         </form>
     </div>
+<script>
+(function () {
+    const master = document.getElementById('selectMaster');
+    const sub    = document.getElementById('selectSubcategoria');
+    const wrap   = document.getElementById('wrapSubcategoria');
+    const allOpts = Array.from(sub.options).slice(1); // exclui o placeholder
+
+    function filtrar() {
+        const masterId = master.value;
+        // mostra/oculta o campo de subcategoria
+        wrap.style.display = masterId ? 'block' : 'none';
+        if (!masterId) sub.value = '';
+        // remove todas exceto placeholder
+        while (sub.options.length > 1) sub.remove(1);
+        allOpts.forEach(function(opt) {
+            if (!masterId || opt.dataset.master === masterId) {
+                sub.add(opt.cloneNode(true));
+            }
+        });
+    }
+
+    master.addEventListener('change', function() {
+        sub.value = '';
+        filtrar();
+    });
+
+    // Na carga da página, filtra pelo master já selecionado (modo edição)
+    filtrar();
+})();
+</script>
 </main>
 </body>
 </html>

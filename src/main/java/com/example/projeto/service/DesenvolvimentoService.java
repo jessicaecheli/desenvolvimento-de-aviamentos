@@ -29,14 +29,14 @@ public class DesenvolvimentoService {
         return desenvolvimentoRepository.findAll();
     }
 
-    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaId, StatusDesenvolvimento status, String codigo, String fornecedor) {
-        return desenvolvimentoRepository.findWithFilters(colecaoId, marcaId, categoriaId, status,
+    public List<Desenvolvimento> listarComFiltros(Long colecaoId, Long marcaId, Long categoriaMasterId, Long categoriaId, StatusDesenvolvimento status, String codigo, String fornecedor) {
+        return desenvolvimentoRepository.findWithFilters(colecaoId, marcaId, categoriaMasterId, categoriaId, status,
             (codigo != null && !codigo.isBlank()) ? codigo.trim() : null,
             (fornecedor != null && !fornecedor.isBlank()) ? fornecedor.trim() : null);
     }
 
     public Desenvolvimento buscarPorId(Long id) {
-        return desenvolvimentoRepository.findById(id)
+        return desenvolvimentoRepository.findByIdFetchingCategoria(id)
             .orElseThrow(() -> new IllegalArgumentException("Desenvolvimento não encontrado: " + id));
     }
 
@@ -50,7 +50,7 @@ public class DesenvolvimentoService {
         Desenvolvimento salvo = desenvolvimentoRepository.save(desenvolvimento);
         EtapaDesenvolvimento etapaInclusao = new EtapaDesenvolvimento();
         etapaInclusao.setDesenvolvimento(salvo);
-        etapaInclusao.setTipo(TipoEtapa.INCLUSAO);
+        etapaInclusao.setTipo(TipoEtapa.ORCAMENTO);
         etapaInclusao.setDataOcorrencia(LocalDate.now());
         etapaRepository.save(etapaInclusao);
         return salvo;
@@ -94,6 +94,7 @@ public class DesenvolvimentoService {
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return false;
 
+        if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return false;
         long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
         return diasUteis > dev.getCategoria().getPrazoDiasUteis();
     }
@@ -103,6 +104,7 @@ public class DesenvolvimentoService {
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return 0;
 
+        if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return 0;
         long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
         return Math.max(0, diasUteis - dev.getCategoria().getPrazoDiasUteis());
     }
@@ -111,6 +113,7 @@ public class DesenvolvimentoService {
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return Long.MAX_VALUE;
+        if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return Long.MAX_VALUE;
         long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
         return dev.getCategoria().getPrazoDiasUteis() - diasUteis;
     }
@@ -123,6 +126,15 @@ public class DesenvolvimentoService {
         if (estaAtrasado(dev)) return false;
         long restantes = diasRestantes(dev);
         return restantes >= 0 && restantes <= 5;
+    }
+
+    public boolean isTecido(Desenvolvimento dev) {
+        if (dev.getCategoria() == null) return false;
+        Categoria cat = dev.getCategoria();
+        String masterNome = cat.getCategoriaPai() != null
+                ? cat.getCategoriaPai().getNome()
+                : cat.getNome();
+        return "TECIDOS".equalsIgnoreCase(masterNome);
     }
 
     public long calcularDiasUteis(LocalDate inicio, LocalDate fim) {

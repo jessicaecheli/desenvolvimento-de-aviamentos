@@ -22,6 +22,7 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
            "LEFT JOIN d.etapas e LEFT JOIN e.orcamento o WHERE " +
            "(:colecaoId IS NULL OR d.colecao.id = :colecaoId) AND " +
            "(:marcaId IS NULL OR d.marca.id = :marcaId) AND " +
+           "(:categoriaMasterId IS NULL OR (d.categoria IS NOT NULL AND d.categoria.categoriaPai.id = :categoriaMasterId)) AND " +
            "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
            "(:status IS NULL OR d.status = :status) AND " +
            "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%'))) AND " +
@@ -30,6 +31,7 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
     List<Desenvolvimento> findWithFilters(
         @Param("colecaoId") Long colecaoId,
         @Param("marcaId") Long marcaId,
+        @Param("categoriaMasterId") Long categoriaMasterId,
         @Param("categoriaId") Long categoriaId,
         @Param("status") StatusDesenvolvimento status,
         @Param("codigo") String codigo,
@@ -37,4 +39,7 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
     );
 
     List<Desenvolvimento> findByStatusIn(List<StatusDesenvolvimento> statuses);
+
+    @Query("SELECT d FROM Desenvolvimento d LEFT JOIN FETCH d.categoria WHERE d.id = :id")
+    java.util.Optional<Desenvolvimento> findByIdFetchingCategoria(@Param("id") Long id);
 }

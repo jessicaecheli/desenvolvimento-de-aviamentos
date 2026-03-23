@@ -96,7 +96,8 @@
                     <form th:action="@{/desenvolvimentos/{id}/avancar(id=${dev.id})}" method="post">
                         <div class="mb-2">
                             <label class="form-label fw-semibold">Tipo</label>
-                            <select name="tipo" class="form-select" required>
+                            <select name="tipo" class="form-select">
+                                <option value="">-- selecione a etapa --</option>
                                 <option th:each="t : ${tiposEtapa}"
                                         th:if="${t.name() != 'INCLUSAO'}"
                                         th:value="${t}" th:text="${t}"></option>

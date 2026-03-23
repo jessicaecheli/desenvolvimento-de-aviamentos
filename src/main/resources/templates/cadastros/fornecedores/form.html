@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title>Fornecedor</title></head>
+<body>
+<main th:fragment="content">
+    <h2 th:text="${fornecedor.id == null ? 'Novo Fornecedor' : 'Editar Fornecedor'}"></h2>
+    <div class="card shadow-sm p-4 mt-3" style="max-width:500px">
+        <form action="/fornecedores/salvar" method="post">
+            <input type="hidden" name="id" th:value="${fornecedor.id}"/>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nome *</label>
+                <input type="text" name="nome" class="form-control uppercase-input"
+                       th:value="${fornecedor.nome}" required/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Contato</label>
+                <input type="text" name="contato" class="form-control uppercase-input"
+                       th:value="${fornecedor.contato}"/>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Telefone</label>
+                <input type="text" name="telefone" class="form-control"
+                       th:value="${fornecedor.telefone}"/>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary">Salvar</button>
+                <a href="/fornecedores" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

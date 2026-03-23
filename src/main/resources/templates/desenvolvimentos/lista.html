@@ -35,9 +35,18 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Categoria</label>
-                <select name="categoriaId" class="form-select">
+                <select id="filtroMaster" name="categoriaMasterId" class="form-select">
+                    <option value="">Todas</option>
+                    <option th:each="m : ${categoriasMaster}" th:value="${m.id}" th:text="${m.nome}"
+                            th:selected="${filtroCategoriaMasterId != null and filtroCategoriaMasterId == m.id}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Subcategoria</label>
+                <select id="filtroSubcategoria" name="categoriaId" class="form-select">
                     <option value="">Todas</option>
                     <option th:each="c : ${categorias}" th:value="${c.id}" th:text="${c.nome}"
+                            th:attr="data-master=${c.categoriaPai.id}"
                             th:selected="${filtroCategoriaId != null and filtroCategoriaId == c.id}"></option>
                 </select>
             </div>
@@ -54,7 +63,7 @@
                 <input type="text" name="fornecedor" class="form-control"
                        placeholder="Nome do fornecedor" th:value="${filtroFornecedor}"/>
             </div>
-            <div class="col-md-2 offset-md-10 d-flex align-items-end">
+            <div class="col-md-2 d-flex align-items-end">
                 <button class="btn btn-outline-primary w-100">Filtrar</button>
             </div>
         </div>
@@ -103,6 +112,30 @@
             </tbody>
         </table>
     </div>
+<script>
+(function () {
+    const master = document.getElementById('filtroMaster');
+    const sub    = document.getElementById('filtroSubcategoria');
+    const allOpts = Array.from(sub.options).slice(1);
+
+    function filtrar() {
+        const masterId = master.value;
+        while (sub.options.length > 1) sub.remove(1);
+        allOpts.forEach(function(opt) {
+            if (!masterId || opt.dataset.master === masterId) {
+                sub.add(opt.cloneNode(true));
+            }
+        });
+    }
+
+    master.addEventListener('change', function() {
+        sub.value = '';
+        filtrar();
+    });
+
+    filtrar();
+})();
+</script>
 </main>
 </body>
 </html>

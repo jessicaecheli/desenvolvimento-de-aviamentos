@@ -1,6 +1,7 @@
 package com.example.projeto.controller;
 
 import com.example.projeto.entity.*;
+import com.example.projeto.repository.DadosTecidoRepository;
 import com.example.projeto.repository.EtapaDesenvolvimentoRepository;
 import com.example.projeto.repository.OrcamentoRepository;
 import com.example.projeto.service.*;
@@ -26,32 +27,39 @@ public class DesenvolvimentoController {
     private final MarcaService marcaService;
     private final ColecaoService colecaoService;
     private final CategoriaService categoriaService;
+    private final FornecedorService fornecedorService;
     private final EtapaDesenvolvimentoRepository etapaRepository;
     private final OrcamentoRepository orcamentoRepository;
+    private final DadosTecidoRepository dadosTecidoRepository;
 
     public DesenvolvimentoController(DesenvolvimentoService service,
                                       MarcaService marcaService,
                                       ColecaoService colecaoService,
                                       CategoriaService categoriaService,
+                                      FornecedorService fornecedorService,
                                       EtapaDesenvolvimentoRepository etapaRepository,
-                                      OrcamentoRepository orcamentoRepository) {
+                                      OrcamentoRepository orcamentoRepository,
+                                      DadosTecidoRepository dadosTecidoRepository) {
         this.service = service;
         this.marcaService = marcaService;
         this.colecaoService = colecaoService;
         this.categoriaService = categoriaService;
+        this.fornecedorService = fornecedorService;
         this.etapaRepository = etapaRepository;
         this.orcamentoRepository = orcamentoRepository;
+        this.dadosTecidoRepository = dadosTecidoRepository;
     }
 
     @GetMapping
     public String lista(@RequestParam(required = false) Long colecaoId,
                         @RequestParam(required = false) Long marcaId,
+                        @RequestParam(required = false) Long categoriaMasterId,
                         @RequestParam(required = false) Long categoriaId,
                         @RequestParam(required = false) StatusDesenvolvimento status,
                         @RequestParam(required = false) String codigo,
                         @RequestParam(required = false) String fornecedor,
                         Model model) {
-        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaId, status, codigo, fornecedor);
+        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaMasterId, categoriaId, status, codigo, fornecedor);
 
         Set<StatusDesenvolvimento> statusComFornecedor = Set.of(
             StatusDesenvolvimento.AMOSTRA, StatusDesenvolvimento.LIBERADA, StatusDesenvolvimento.APROVADO);
@@ -75,10 +83,12 @@ public class DesenvolvimentoController {
         model.addAttribute("fornecedoresPorDev", fornecedoresPorDev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
-        model.addAttribute("categorias", categoriaService.listarTodas());
+        model.addAttribute("categoriasMaster", categoriaService.listarMasters());
+        model.addAttribute("categorias", categoriaService.listarSubcategorias());
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
         model.addAttribute("filtroColecaoId", colecaoId);
         model.addAttribute("filtroMarcaId", marcaId);
+        model.addAttribute("filtroCategoriaMasterId", categoriaMasterId);
         model.addAttribute("filtroCategoriaId", categoriaId);
         model.addAttribute("filtroStatus", status);
         model.addAttribute("filtroCodigo", codigo);
@@ -91,7 +101,8 @@ public class DesenvolvimentoController {
         model.addAttribute("desenvolvimento", new Desenvolvimento());
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
-        model.addAttribute("categorias", categoriaService.listarTodas());
+        model.addAttribute("categoriasMaster", categoriaService.listarMasters());
+        model.addAttribute("subcategorias", categoriaService.listarSubcategorias());
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
         return "desenvolvimentos/form";
     }
@@ -102,7 +113,8 @@ public class DesenvolvimentoController {
         model.addAttribute("desenvolvimento", dev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
-        model.addAttribute("categorias", categoriaService.listarTodas());
+        model.addAttribute("categoriasMaster", categoriaService.listarMasters());
+        model.addAttribute("subcategorias", categoriaService.listarSubcategorias());
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
         return "desenvolvimentos/form";
     }
@@ -148,21 +160,60 @@ public class DesenvolvimentoController {
         Desenvolvimento dev = service.buscarPorId(id);
         List<EtapaDesenvolvimento> etapas = etapaRepository
             .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
+        model.addAttribute("dev", dev);
+        model.addAttribute("etapas", etapas);
+        model.addAttribute("tiposEtapa", TipoEtapa.values());
+        model.addAttribute("atrasado", service.estaAtrasado(dev));
+        model.addAttribute("diasAtraso", service.diasAtraso(dev));
+
+        if (service.isTecido(dev)) {
+            DadosTecido dadosTecido = dadosTecidoRepository.findByDesenvolvimentoId(id)
+                    .orElse(new DadosTecido());
+            model.addAttribute("dadosTecido", dadosTecido);
+            model.addAttribute("fornecedores", fornecedorService.listarTodos());
+            return "desenvolvimentos/detalhe-tecido";
+        }
+
         List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
         Long menorOrcamentoId = orcamentos.stream()
             .filter(o -> o.getValorMinimo() != null)
             .min(Comparator.comparing(Orcamento::getValorMinimo))
             .map(Orcamento::getId)
             .orElse(null);
-        model.addAttribute("dev", dev);
-        model.addAttribute("etapas", etapas);
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("menorOrcamentoId", menorOrcamentoId);
-        model.addAttribute("tiposEtapa", TipoEtapa.values());
-        model.addAttribute("atrasado", service.estaAtrasado(dev));
-        model.addAttribute("diasAtraso", service.diasAtraso(dev));
         model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
         return "desenvolvimentos/detalhe";
+    }
+
+    @PostMapping("/{id}/tecido")
+    public String salvarDadosTecido(@PathVariable Long id,
+                                     @RequestParam(required = false) String corEstampa,
+                                     @RequestParam(required = false) String unidadeMedida,
+                                     @RequestParam(required = false) Long fornecedorId,
+                                     @RequestParam(required = false) BigDecimal minimoCompraQtd,
+                                     @RequestParam(required = false) String minimoCompraUnidade,
+                                     @RequestParam(required = false) String infoCompraAmostra,
+                                     @RequestParam(required = false) BigDecimal preco,
+                                     @RequestParam(required = false) BigDecimal precoNegociado,
+                                     @RequestParam(required = false) BigDecimal valorDolar,
+                                     RedirectAttributes ra) {
+        Desenvolvimento dev = service.buscarPorId(id);
+        DadosTecido dados = dadosTecidoRepository.findByDesenvolvimentoId(id)
+                .orElse(new DadosTecido());
+        dados.setDesenvolvimento(dev);
+        dados.setCorEstampa(corEstampa);
+        dados.setUnidadeMedida(unidadeMedida);
+        dados.setFornecedor(fornecedorId != null ? fornecedorService.buscarPorId(fornecedorId) : null);
+        dados.setMinimoCompraQtd(minimoCompraQtd);
+        dados.setMinimoCompraUnidade(minimoCompraUnidade);
+        dados.setInfoCompraAmostra(infoCompraAmostra);
+        dados.setPreco(preco);
+        dados.setPrecoNegociado(precoNegociado);
+        dados.setValorDolar(valorDolar);
+        dadosTecidoRepository.save(dados);
+        ra.addFlashAttribute("sucesso", "Dados do tecido salvos.");
+        return "redirect:/desenvolvimentos/" + id;
     }
 
     @PostMapping("/{id}/systextil")
@@ -182,11 +233,14 @@ public class DesenvolvimentoController {
 
     @PostMapping("/{id}/avancar")
     public String avancarEtapa(@PathVariable Long id,
-                                @RequestParam TipoEtapa tipo,
+                                @RequestParam(required = false) TipoEtapa tipo,
                                 @RequestParam(required = false) String observacao,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataOcorrencia,
                                 @RequestParam(required = false) Long orcamentoId,
                                 RedirectAttributes ra) {
+        if (tipo == null) {
+            return "redirect:/desenvolvimentos/" + id;
+        }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
         service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento);
         ra.addFlashAttribute("sucesso", "Etapa registrada com sucesso.");

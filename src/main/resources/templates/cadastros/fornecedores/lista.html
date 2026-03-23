@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title>Fornecedores</title></head>
+<body>
+<main th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-truck"></i> Fornecedores</h2>
+        <a href="/fornecedores/novo" class="btn btn-primary"><i class="bi bi-plus"></i> Novo Fornecedor</a>
+    </div>
+    <div class="card shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Contato</th>
+                    <th>Telefone</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(fornecedores)}">
+                    <td colspan="5" class="text-center text-muted py-3">Nenhum fornecedor cadastrado.</td>
+                </tr>
+                <tr th:each="f : ${fornecedores}">
+                    <td th:text="${f.id}"></td>
+                    <td th:text="${f.nome}"></td>
+                    <td th:text="${f.contato ?: '-'}"></td>
+                    <td th:text="${f.telefone ?: '-'}"></td>
+                    <td class="text-end">
+                        <a th:href="@{/fornecedores/{id}/editar(id=${f.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form th:action="@{/fornecedores/{id}/excluir(id=${f.id})}" method="post" class="d-inline"
+                              onsubmit="return confirm('Excluir fornecedor?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -11,14 +11,13 @@
     <div class="card shadow-sm">
         <table class="table table-hover mb-0">
             <thead class="table-dark">
-                <tr><th>#</th><th>Nome Completo</th><th class="text-end">Ações</th></tr>
+                <tr><th>Nome Completo</th><th class="text-end">Ações</th></tr>
             </thead>
             <tbody>
                 <tr th:if="${#lists.isEmpty(colecoes)}">
-                    <td colspan="3" class="text-center text-muted py-3">Nenhuma coleção cadastrada.</td>
+                    <td colspan="2" class="text-center text-muted py-3">Nenhuma coleção cadastrada.</td>
                 </tr>
                 <tr th:each="c : ${colecoes}">
-                    <td th:text="${c.id}"></td>
                     <td th:text="${c.nomeCompleto}"></td>
                     <td class="text-end">
                         <a th:href="@{/colecoes/{id}/editar(id=${c.id})}" class="btn btn-sm btn-outline-secondary">

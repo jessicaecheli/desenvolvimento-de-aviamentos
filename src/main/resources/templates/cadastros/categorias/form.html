@@ -1,19 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
-<head><title>Categoria</title></head>
+<head><title>Subcategoria</title></head>
 <body>
 <main th:fragment="content">
-    <h2 th:text="${categoria.id == null ? 'Nova Categoria' : 'Editar Categoria'}"></h2>
+    <h2 th:text="${categoria.id == null ? 'Nova Subcategoria' : 'Editar Subcategoria'}"></h2>
     <div class="card shadow-sm p-4 mt-3" style="max-width:500px">
         <form action="/categorias/salvar" method="post">
             <input type="hidden" name="id" th:value="${categoria.id}"/>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Nome</label>
+                <label class="form-label fw-semibold">Categoria *</label>
+                <select name="categoriaPaiId" class="form-select" required>
+                    <option value="">-- selecione --</option>
+                    <option th:each="m : ${masters}" th:value="${m.id}" th:text="${m.nome}"
+                            th:selected="${categoria.categoriaPai != null and categoria.categoriaPai.id == m.id}"></option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Subcategoria *</label>
                 <input type="text" name="nome" class="form-control uppercase-input" th:value="${categoria.nome}" required/>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Prazo (dias úteis)</label>
+                <label class="form-label fw-semibold">Prazo (dias úteis) *</label>
                 <input type="number" name="prazoDiasUteis" class="form-control"
                        th:value="${categoria.prazoDiasUteis}" min="1" required/>
             </div>
