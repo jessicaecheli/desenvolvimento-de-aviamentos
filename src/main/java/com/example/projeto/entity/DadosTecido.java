@@ -1,5 +1,6 @@
 package com.example.projeto.entity;
 
+import com.example.projeto.entity.Categoria;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,7 +25,10 @@ public class DadosTecido {
     private Fornecedor fornecedor;
 
     private BigDecimal minimoCompraQtd;
-    private String minimoCompraUnidade;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_estampa_id")
+    private Categoria tipoEstampa;
 
     @Column(columnDefinition = "TEXT")
     private String infoCompraAmostra;
@@ -32,6 +36,7 @@ public class DadosTecido {
     private BigDecimal preco;
     private BigDecimal precoNegociado;
     private BigDecimal valorDolar;
+    private BigDecimal rendimento;
 
     public BigDecimal getPercentualReducao() {
         if (preco == null || precoNegociado == null || preco.compareTo(BigDecimal.ZERO) == 0) return null;
@@ -39,6 +44,11 @@ public class DadosTecido {
                 .divide(preco, 4, RoundingMode.HALF_UP)
                 .multiply(new BigDecimal("100"))
                 .setScale(1, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal getConversaoKgMetro() {
+        if (precoNegociado == null || rendimento == null || rendimento.compareTo(BigDecimal.ZERO) == 0) return null;
+        return precoNegociado.divide(rendimento, 4, RoundingMode.HALF_UP);
     }
 
     public DadosTecido() {}
@@ -55,8 +65,8 @@ public class DadosTecido {
     public void setFornecedor(Fornecedor fornecedor) { this.fornecedor = fornecedor; }
     public BigDecimal getMinimoCompraQtd() { return minimoCompraQtd; }
     public void setMinimoCompraQtd(BigDecimal minimoCompraQtd) { this.minimoCompraQtd = minimoCompraQtd; }
-    public String getMinimoCompraUnidade() { return minimoCompraUnidade; }
-    public void setMinimoCompraUnidade(String minimoCompraUnidade) { this.minimoCompraUnidade = minimoCompraUnidade; }
+    public Categoria getTipoEstampa() { return tipoEstampa; }
+    public void setTipoEstampa(Categoria tipoEstampa) { this.tipoEstampa = tipoEstampa; }
     public String getInfoCompraAmostra() { return infoCompraAmostra; }
     public void setInfoCompraAmostra(String infoCompraAmostra) { this.infoCompraAmostra = infoCompraAmostra; }
     public BigDecimal getPreco() { return preco; }
@@ -65,4 +75,6 @@ public class DadosTecido {
     public void setPrecoNegociado(BigDecimal precoNegociado) { this.precoNegociado = precoNegociado; }
     public BigDecimal getValorDolar() { return valorDolar; }
     public void setValorDolar(BigDecimal valorDolar) { this.valorDolar = valorDolar; }
+    public BigDecimal getRendimento() { return rendimento; }
+    public void setRendimento(BigDecimal rendimento) { this.rendimento = rendimento; }
 }

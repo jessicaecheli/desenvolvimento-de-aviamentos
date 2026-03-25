@@ -171,6 +171,14 @@ public class DesenvolvimentoController {
                     .orElse(new DadosTecido());
             model.addAttribute("dadosTecido", dadosTecido);
             model.addAttribute("fornecedores", fornecedorService.listarTodos());
+            categoriaService.listarMasters().stream()
+                .filter(m -> "TECIDOS".equalsIgnoreCase(m.getNome()))
+                .findFirst()
+                .ifPresent(master -> model.addAttribute("subcategoriasTecidos",
+                    categoriaService.listarSubcategoriasPorMaster(master.getId())));
+            if (!model.containsAttribute("subcategoriasTecidos")) {
+                model.addAttribute("subcategoriasTecidos", List.of());
+            }
             return "desenvolvimentos/detalhe-tecido";
         }
 
@@ -192,11 +200,12 @@ public class DesenvolvimentoController {
                                      @RequestParam(required = false) String unidadeMedida,
                                      @RequestParam(required = false) Long fornecedorId,
                                      @RequestParam(required = false) BigDecimal minimoCompraQtd,
-                                     @RequestParam(required = false) String minimoCompraUnidade,
+                                     @RequestParam(required = false) Long tipoEstampaId,
                                      @RequestParam(required = false) String infoCompraAmostra,
                                      @RequestParam(required = false) BigDecimal preco,
                                      @RequestParam(required = false) BigDecimal precoNegociado,
                                      @RequestParam(required = false) BigDecimal valorDolar,
+                                     @RequestParam(required = false) BigDecimal rendimento,
                                      RedirectAttributes ra) {
         Desenvolvimento dev = service.buscarPorId(id);
         DadosTecido dados = dadosTecidoRepository.findByDesenvolvimentoId(id)
@@ -206,11 +215,12 @@ public class DesenvolvimentoController {
         dados.setUnidadeMedida(unidadeMedida);
         dados.setFornecedor(fornecedorId != null ? fornecedorService.buscarPorId(fornecedorId) : null);
         dados.setMinimoCompraQtd(minimoCompraQtd);
-        dados.setMinimoCompraUnidade(minimoCompraUnidade);
+        dados.setTipoEstampa(tipoEstampaId != null ? categoriaService.buscarPorId(tipoEstampaId) : null);
         dados.setInfoCompraAmostra(infoCompraAmostra);
         dados.setPreco(preco);
         dados.setPrecoNegociado(precoNegociado);
         dados.setValorDolar(valorDolar);
+        dados.setRendimento(rendimento);
         dadosTecidoRepository.save(dados);
         ra.addFlashAttribute("sucesso", "Dados do tecido salvos.");
         return "redirect:/desenvolvimentos/" + id;

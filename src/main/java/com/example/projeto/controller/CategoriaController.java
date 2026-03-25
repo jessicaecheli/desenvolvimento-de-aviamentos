@@ -18,8 +18,14 @@ public class CategoriaController {
     }
 
     @GetMapping
-    public String lista(Model model) {
-        model.addAttribute("subcategorias", service.listarSubcategorias());
+    public String lista(@RequestParam(required = false) Long categoriaMasterId, Model model) {
+        if (categoriaMasterId != null) {
+            model.addAttribute("subcategorias", service.listarSubcategoriasPorMaster(categoriaMasterId));
+        } else {
+            model.addAttribute("subcategorias", service.listarSubcategorias());
+        }
+        model.addAttribute("masters", service.listarMasters());
+        model.addAttribute("filtroMasterId", categoriaMasterId);
         return "cadastros/categorias/lista";
     }
 

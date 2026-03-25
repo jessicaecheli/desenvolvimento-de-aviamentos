@@ -10,5 +10,7 @@ public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
     boolean existsByNomeIgnoreCase(String nome);
     List<Categoria> findByCategoriaPaiIsNull();
     List<Categoria> findByCategoriaPaiIsNotNull();
+    List<Categoria> findByCategoriaPaiIsNotNullOrderByCategoriaPaiNomeAscNomeAsc();
     List<Categoria> findByCategoriaPaiId(Long categoriaPaiId);
+    List<Categoria> findByCategoriaPaiIdOrderByNomeAsc(Long categoriaPaiId);
 }

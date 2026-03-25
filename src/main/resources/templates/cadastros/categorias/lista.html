@@ -8,6 +8,14 @@
         <h2><i class="bi bi-grid"></i> Subcategorias</h2>
         <a href="/categorias/nova" class="btn btn-primary"><i class="bi bi-plus"></i> Nova Subcategoria</a>
     </div>
+    <div class="mb-3 d-flex gap-2">
+        <a th:href="@{/categorias}"
+           th:classappend="${filtroMasterId == null} ? 'active'" class="btn btn-outline-secondary">Todas</a>
+        <a th:each="m : ${masters}"
+           th:href="@{/categorias(categoriaMasterId=${m.id})}"
+           th:text="${m.nome}"
+           th:classappend="${filtroMasterId == m.id} ? 'active'" class="btn btn-outline-secondary"></a>
+    </div>
     <div class="card shadow-sm">
         <table class="table table-hover mb-0">
             <thead class="table-dark">

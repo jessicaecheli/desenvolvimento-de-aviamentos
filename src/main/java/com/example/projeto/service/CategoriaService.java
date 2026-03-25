@@ -24,7 +24,11 @@ public class CategoriaService {
     }
 
     public List<Categoria> listarSubcategorias() {
-        return repository.findByCategoriaPaiIsNotNull();
+        return repository.findByCategoriaPaiIsNotNullOrderByCategoriaPaiNomeAscNomeAsc();
+    }
+
+    public List<Categoria> listarSubcategoriasPorMaster(Long masterId) {
+        return repository.findByCategoriaPaiIdOrderByNomeAsc(masterId);
     }
 
     public List<Categoria> listarPorMaster(Long masterId) {

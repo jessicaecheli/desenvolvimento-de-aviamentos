@@ -99,9 +99,15 @@
                                        th:value="${dadosTecido.minimoCompraQtd}" placeholder="Ex: 50"/>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Unidade do Mínimo</label>
-                                <input type="text" name="minimoCompraUnidade" class="form-control uppercase-input"
-                                       th:value="${dadosTecido.minimoCompraUnidade}" placeholder="Ex: METROS"/>
+                                <label class="form-label fw-semibold">Tipo de Estampa</label>
+                                <select name="tipoEstampaId" class="form-select">
+                                    <option value="">(nenhum)</option>
+                                    <option th:each="s : ${subcategoriasTecidos}"
+                                            th:value="${s.id}"
+                                            th:text="${s.nome}"
+                                            th:selected="${dadosTecido.tipoEstampa != null and dadosTecido.tipoEstampa.id == s.id}">
+                                    </option>
+                                </select>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Informações de Compra de Amostra</label>
@@ -127,8 +133,9 @@
                         <input type="hidden" name="fornecedorId"
                                th:value="${dadosTecido.fornecedor != null ? dadosTecido.fornecedor.id : ''}"/>
                         <input type="hidden" name="minimoCompraQtd" th:value="${dadosTecido.minimoCompraQtd}"/>
-                        <input type="hidden" name="minimoCompraUnidade" th:value="${dadosTecido.minimoCompraUnidade}"/>
+                        <input type="hidden" name="tipoEstampaId" th:value="${dadosTecido.tipoEstampa != null ? dadosTecido.tipoEstampa.id : ''}"/>
                         <input type="hidden" name="infoCompraAmostra" th:value="${dadosTecido.infoCompraAmostra}"/>
+                        <input type="hidden" name="rendimento" th:value="${dadosTecido.rendimento}"/>
 
                         <div class="row g-2">
                             <div class="col-md-6">
@@ -156,6 +163,18 @@
                                 <label class="form-label fw-semibold">Valor em Dólar (US$)</label>
                                 <input type="number" name="valorDolar" step="0.0001" class="form-control"
                                        th:value="${dadosTecido.valorDolar}" placeholder="0,0000"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Rendimento (m)</label>
+                                <input type="number" name="rendimento" step="0.0001" class="form-control" id="inputRendimento"
+                                       th:value="${dadosTecido.rendimento}" placeholder="0,0000"
+                                       oninput="calcConversao()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Conversão KG→Metro (R$/m)</label>
+                                <input type="text" id="conversaoKgMetro" class="form-control" readonly
+                                       th:value="${dadosTecido.conversaoKgMetro != null ?
+                                           #numbers.formatDecimal(dadosTecido.conversaoKgMetro, 1, 'POINT', 4, 'COMMA') : ''}"/>
                             </div>
                             <div class="col-12">
                                 <button class="btn btn-primary w-100">Salvar Preço e Negociação</button>
@@ -193,28 +212,6 @@
                 </div>
             </div>
 
-            <!-- Código Systêxtil -->
-            <div class="card shadow-sm">
-                <div class="card-header fw-semibold"><i class="bi bi-upc-scan"></i> Código Systêxtil</div>
-                <div class="card-body">
-                    <form th:action="@{/desenvolvimentos/{id}/systextil(id=${dev.id})}" method="post">
-                        <div class="mb-2">
-                            <input type="text" name="codigoSystextil1" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil1}" placeholder="Código 1"/>
-                        </div>
-                        <div class="mb-2">
-                            <input type="text" name="codigoSystextil2" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil2}" placeholder="Código 2"/>
-                        </div>
-                        <div class="mb-2">
-                            <input type="text" name="codigoSystextil3" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil3}" placeholder="Código 3"/>
-                        </div>
-                        <button class="btn btn-primary w-100">Salvar</button>
-                    </form>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -226,6 +223,17 @@
         if (preco > 0 && precoNeg >= 0) {
             const pct = ((preco - precoNeg) / preco * 100).toFixed(1);
             campo.value = pct.replace('.', ',');
+        } else {
+            campo.value = '';
+        }
+        calcConversao();
+    }
+    function calcConversao() {
+        const precoNeg = parseFloat(document.getElementById('inputPrecoNeg').value) || 0;
+        const rend = parseFloat(document.getElementById('inputRendimento').value) || 0;
+        const campo = document.getElementById('conversaoKgMetro');
+        if (precoNeg > 0 && rend > 0) {
+            campo.value = (precoNeg / rend).toFixed(4).replace('.', ',');
         } else {
             campo.value = '';
         }
