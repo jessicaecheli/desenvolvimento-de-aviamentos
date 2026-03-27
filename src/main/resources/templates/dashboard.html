@@ -60,6 +60,15 @@
                 </div>
             </div>
         </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold"
+                         th:text="${'R$ ' + #numbers.formatDecimal(dashboard.totalCustoAmostras, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
+                    <div>Custo com Amostras</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -104,15 +113,25 @@
         <!-- Leadtime médio -->
         <div class="col-md-4">
             <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold"><i class="bi bi-stopwatch"></i> Leadtime Médio por Categoria (dias úteis)</div>
+                <div class="card-header fw-semibold"><i class="bi bi-stopwatch"></i> Leadtime Médio por Subcategoria (d.u.)</div>
                 <div class="card-body p-0">
                     <div th:if="${#maps.isEmpty(dashboard.leadtimeMediaPorCategoria)}" class="p-3 text-muted">Sem dados.</div>
                     <table th:unless="${#maps.isEmpty(dashboard.leadtimeMediaPorCategoria)}" class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small">Subcategoria</th>
+                                <th class="text-end small" title="Inserção até a 1ª Liberada">1ª Lib.</th>
+                                <th class="text-end small" title="Inserção até a última Liberada">Final</th>
+                            </tr>
+                        </thead>
                         <tbody>
                             <tr th:each="entry : ${dashboard.leadtimeMediaPorCategoria}">
                                 <td th:text="${entry.key}" class="small"></td>
-                                <td class="text-end fw-bold"
-                                    th:text="${#numbers.formatDecimal(entry.value,1,'POINT',1,'COMMA')}"></td>
+                                <td class="text-end fw-bold small"
+                                    th:text="${#numbers.formatDecimal(entry.value, 1, 'POINT', 1, 'COMMA')}"></td>
+                                <td class="text-end fw-bold small"
+                                    th:text="${dashboard.leadtimeMediaFinalPorCategoria[entry.key] != null ?
+                                        #numbers.formatDecimal(dashboard.leadtimeMediaFinalPorCategoria[entry.key], 1, 'POINT', 1, 'COMMA') : '-'}"></td>
                             </tr>
                         </tbody>
                     </table>

@@ -56,6 +56,9 @@
                                     <span th:text="${e.orcamento.fornecedor ?: '(sem fornecedor)'}"></span>
                                 </div>
                                 <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
+                                <div th:if="${e.custoAmostra != null}" class="small text-warning fw-semibold">
+                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </div>
                                 <div th:if="${e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
                                 </div>
@@ -114,11 +117,13 @@
                                 </option>
                             </select>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Data</label>
-                            <input type="date" name="dataOcorrencia" class="form-control"
-                                   th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
+                        <!-- Custo da amostra — aparece só para AMOSTRA -->
+                        <div class="mb-2" id="campoCustoAmostra" style="display:none">
+                            <label class="form-label fw-semibold">Custo da Amostra (R$)</label>
+                            <input type="number" name="custoAmostra" step="0.01" class="form-control" placeholder="0,00"/>
                         </div>
+                        <input type="hidden" name="dataOcorrencia"
+                               th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
                         <div class="mb-2">
                             <label class="form-label fw-semibold">Observação</label>
                             <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
@@ -189,8 +194,14 @@
                                     <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
                                           method="post" class="row g-1">
                                         <div class="col-12">
-                                            <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
-                                                   th:value="${o.fornecedor}" placeholder="Fornecedor"/>
+                                            <select name="fornecedor" class="form-select form-select-sm">
+                                                <option value="">(nenhum)</option>
+                                                <option th:each="f : ${fornecedores}"
+                                                        th:value="${f.nome}"
+                                                        th:text="${f.nome}"
+                                                        th:selected="${f.nome == o.fornecedor}">
+                                                </option>
+                                            </select>
                                         </div>
                                         <div class="col-6">
                                             <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
@@ -241,8 +252,13 @@
                             <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post">
                                 <div class="row g-1">
                                     <div class="col-12">
-                                        <input type="text" name="fornecedor" class="form-control form-control-sm uppercase-input"
-                                               placeholder="Fornecedor"/>
+                                        <select name="fornecedor" class="form-select form-select-sm">
+                                            <option value="">(nenhum)</option>
+                                            <option th:each="f : ${fornecedores}"
+                                                    th:value="${f.nome}"
+                                                    th:text="${f.nome}">
+                                            </option>
+                                        </select>
                                     </div>
                                     <div class="col-6">
                                         <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
@@ -293,10 +309,12 @@
     <script>
     (function () {
         const tiposComOrc = ['AMOSTRA', 'LIBERADA', 'APROVADO'];
-        const tipoSelect = document.querySelector('select[name="tipo"]');
-        const campoOrc   = document.getElementById('campoOrcamento');
+        const tipoSelect  = document.querySelector('select[name="tipo"]');
+        const campoOrc    = document.getElementById('campoOrcamento');
+        const campoCusto  = document.getElementById('campoCustoAmostra');
         function atualizar() {
-            campoOrc.style.display = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
+            campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
+            campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
         }
         tipoSelect.addEventListener('change', atualizar);
         atualizar();

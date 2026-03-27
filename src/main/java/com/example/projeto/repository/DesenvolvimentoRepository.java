@@ -25,7 +25,10 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
            "(:categoriaMasterId IS NULL OR (d.categoria IS NOT NULL AND d.categoria.categoriaPai.id = :categoriaMasterId)) AND " +
            "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
            "(:status IS NULL OR d.status = :status) AND " +
-           "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%'))) AND " +
+           "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%')) " +
+           "    OR UPPER(d.codigoSystextil1) LIKE UPPER(CONCAT('%', :codigo, '%')) " +
+           "    OR UPPER(d.codigoSystextil2) LIKE UPPER(CONCAT('%', :codigo, '%')) " +
+           "    OR UPPER(d.codigoSystextil3) LIKE UPPER(CONCAT('%', :codigo, '%'))) AND " +
            "(:fornecedor IS NULL OR UPPER(o.fornecedor) LIKE UPPER(CONCAT('%', :fornecedor, '%'))) " +
            "ORDER BY d.id DESC")
     List<Desenvolvimento> findWithFilters(

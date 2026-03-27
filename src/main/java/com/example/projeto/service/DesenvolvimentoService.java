@@ -62,7 +62,7 @@ public class DesenvolvimentoService {
     }
 
     @Transactional
-    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia, Orcamento orcamento) {
+    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia, Orcamento orcamento, java.math.BigDecimal custoAmostra) {
         Desenvolvimento dev = buscarPorId(id);
 
         EtapaDesenvolvimento etapa = new EtapaDesenvolvimento();
@@ -71,6 +71,9 @@ public class DesenvolvimentoService {
         etapa.setObservacao(observacao);
         etapa.setDataOcorrencia(dataOcorrencia != null ? dataOcorrencia : LocalDate.now());
         etapa.setOrcamento(orcamento);
+        if (tipo == TipoEtapa.AMOSTRA && custoAmostra != null) {
+            etapa.setCustoAmostra(custoAmostra);
+        }
 
         if (tipo == TipoEtapa.ALTERACAO) {
             long rodadas = dev.getEtapas().stream()

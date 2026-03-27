@@ -191,6 +191,7 @@ public class DesenvolvimentoController {
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("menorOrcamentoId", menorOrcamentoId);
         model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
+        model.addAttribute("fornecedores", fornecedorService.listarTodos());
         return "desenvolvimentos/detalhe";
     }
 
@@ -206,6 +207,7 @@ public class DesenvolvimentoController {
                                      @RequestParam(required = false) BigDecimal precoNegociado,
                                      @RequestParam(required = false) BigDecimal valorDolar,
                                      @RequestParam(required = false) BigDecimal rendimento,
+                                     @RequestParam(required = false) String origem,
                                      RedirectAttributes ra) {
         Desenvolvimento dev = service.buscarPorId(id);
         DadosTecido dados = dadosTecidoRepository.findByDesenvolvimentoId(id)
@@ -222,6 +224,15 @@ public class DesenvolvimentoController {
         dados.setValorDolar(valorDolar);
         dados.setRendimento(rendimento);
         dadosTecidoRepository.save(dados);
+        if ("preco".equals(origem)) {
+            EtapaDesenvolvimento etapaPreco = new EtapaDesenvolvimento();
+            etapaPreco.setDesenvolvimento(dev);
+            etapaPreco.setTipo(TipoEtapa.ORCAMENTO);
+            etapaPreco.setDataOcorrencia(LocalDate.now());
+            String nomeFornecedor = dados.getFornecedor() != null ? dados.getFornecedor().getNome() : "(sem fornecedor)";
+            etapaPreco.setObservacao("PREÇO - " + nomeFornecedor);
+            etapaRepository.save(etapaPreco);
+        }
         ra.addFlashAttribute("sucesso", "Dados do tecido salvos.");
         return "redirect:/desenvolvimentos/" + id;
     }
@@ -247,12 +258,13 @@ public class DesenvolvimentoController {
                                 @RequestParam(required = false) String observacao,
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataOcorrencia,
                                 @RequestParam(required = false) Long orcamentoId,
+                                @RequestParam(required = false) BigDecimal custoAmostra,
                                 RedirectAttributes ra) {
         if (tipo == null) {
             return "redirect:/desenvolvimentos/" + id;
         }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
-        service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento);
+        service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra);
         ra.addFlashAttribute("sucesso", "Etapa registrada com sucesso.");
         return "redirect:/desenvolvimentos/" + id;
     }
@@ -321,8 +333,46 @@ public class DesenvolvimentoController {
         orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
         orcamentoRepository.save(orc);
+        Desenvolvimento devOrc = service.buscarPorId(devId);
+        EtapaDesenvolvimento etapaAlteracao = new EtapaDesenvolvimento();
+        etapaAlteracao.setDesenvolvimento(devOrc);
+        etapaAlteracao.setTipo(TipoEtapa.ORCAMENTO);
+        etapaAlteracao.setDataOcorrencia(LocalDate.now());
+        StringBuilder obsAlteracao = new StringBuilder("ALTERAÇÃO - ");
+        obsAlteracao.append(fornecedor != null && !fornecedor.isBlank() ? fornecedor : "(sem fornecedor)");
+        if (tamanho != null && !tamanho.isBlank()) {
+            obsAlteracao.append(" | ").append(tamanho);
+            if (valor != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor).replace('.', ','));
+        }
+        if (tamanho2 != null && !tamanho2.isBlank()) {
+            obsAlteracao.append(" | ").append(tamanho2);
+            if (valor2 != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor2).replace('.', ','));
+        }
+        if (tamanho3 != null && !tamanho3.isBlank()) {
+            obsAlteracao.append(" | ").append(tamanho3);
+            if (valor3 != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor3).replace('.', ','));
+        }
+        if (quantidade != null) obsAlteracao.append(" | Qtd: ").append(quantidade);
+        if (observacao != null && !observacao.isBlank()) obsAlteracao.append(" | ").append(observacao);
+        etapaAlteracao.setObservacao(obsAlteracao.toString());
+        etapaRepository.save(etapaAlteracao);
         ra.addFlashAttribute("sucesso", "Orçamento atualizado.");
         return "redirect:/desenvolvimentos/" + devId;
+    }
+
+    @GetMapping("/{id}/ficha")
+    public String ficha(@PathVariable Long id, Model model) {
+        Desenvolvimento dev = service.buscarPorId(id);
+        List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
+        List<EtapaDesenvolvimento> etapas = etapaRepository.findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
+        LocalDate dataAprovacao = etapas.stream()
+            .filter(e -> e.getTipo() == TipoEtapa.APROVADO)
+            .map(EtapaDesenvolvimento::getDataOcorrencia)
+            .findFirst().orElse(null);
+        model.addAttribute("dev", dev);
+        model.addAttribute("orcamentos", orcamentos);
+        model.addAttribute("dataAprovacao", dataAprovacao);
+        return "desenvolvimentos/ficha";
     }
 
     @PostMapping("/{id}/excluir")

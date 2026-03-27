@@ -90,24 +90,36 @@ public class DashboardService {
             .collect(Collectors.toList());
         dto.setAtrasados(atrasados);
 
-        // Leadtime médio por categoria (dias úteis da primeira à última etapa do desenvolvimento)
-        Map<String, List<Long>> leadtimesPorCategoria = new LinkedHashMap<>();
+        // Leadtime médio por subcategoria — 1ª Liberada e última Liberada
+        Map<String, List<Long>> leadtimesPrimeiraLib = new LinkedHashMap<>();
+        Map<String, List<Long>> leadtimesUltimaLib  = new LinkedHashMap<>();
         for (Desenvolvimento dev : todos) {
             if (dev.getCategoria() == null) continue;
             List<EtapaDesenvolvimento> etapas = etapaRepository
                 .findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(dev.getId());
-            if (etapas.size() < 2) continue;
-            long dias = desenvolvimentoService.calcularDiasUteis(
-                etapas.get(0).getDataOcorrencia(),
-                etapas.get(etapas.size() - 1).getDataOcorrencia()
+            Optional<EtapaDesenvolvimento> etapaInicial = etapas.stream().findFirst();
+            List<EtapaDesenvolvimento> liberadas = etapas.stream()
+                .filter(e -> e.getTipo() == TipoEtapa.LIBERADA)
+                .toList();
+            if (etapaInicial.isEmpty() || liberadas.isEmpty()) continue;
+            String cat = dev.getCategoria().getNome();
+            long diasPrimeira = desenvolvimentoService.calcularDiasUteis(
+                etapaInicial.get().getDataOcorrencia(),
+                liberadas.get(0).getDataOcorrencia()
             );
-            leadtimesPorCategoria
-                .computeIfAbsent(dev.getCategoria().getNome(), k -> new ArrayList<>())
-                .add(dias);
+            long diasUltima = desenvolvimentoService.calcularDiasUteis(
+                etapaInicial.get().getDataOcorrencia(),
+                liberadas.get(liberadas.size() - 1).getDataOcorrencia()
+            );
+            leadtimesPrimeiraLib.computeIfAbsent(cat, k -> new ArrayList<>()).add(diasPrimeira);
+            leadtimesUltimaLib.computeIfAbsent(cat, k -> new ArrayList<>()).add(diasUltima);
         }
         Map<String, Double> medias = new LinkedHashMap<>();
-        leadtimesPorCategoria.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
+        leadtimesPrimeiraLib.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
         dto.setLeadtimeMediaPorCategoria(medias);
+        Map<String, Double> mediasFinais = new LinkedHashMap<>();
+        leadtimesUltimaLib.forEach((k, v) -> mediasFinais.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
+        dto.setLeadtimeMediaFinalPorCategoria(mediasFinais);
 
         // Histórico de atrasados (todos que já ultrapassaram o prazo na fase de amostra)
         Set<TipoEtapa> faseAmostra = Set.of(TipoEtapa.AMOSTRA, TipoEtapa.ALTERACAO);
@@ -143,6 +155,12 @@ public class DashboardService {
             }
         }
         dto.setTotalHistoricoAtrasados(historicoAtrasados);
+
+        // Custo total com amostras
+        java.math.BigDecimal custoAmostras = ids.isEmpty()
+            ? java.math.BigDecimal.ZERO
+            : etapaRepository.sumCustoAmostraByDesenvolvimentoIds(ids);
+        dto.setTotalCustoAmostras(custoAmostras);
 
         return dto;
     }

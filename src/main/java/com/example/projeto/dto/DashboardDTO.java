@@ -2,6 +2,7 @@ package com.example.projeto.dto;
 
 import com.example.projeto.entity.StatusDesenvolvimento;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,9 @@ public class DashboardDTO {
     private long totalComAlteracao;
     private List<AtrasadoDTO> atrasados;
     private Map<String, Double> leadtimeMediaPorCategoria;
+    private Map<String, Double> leadtimeMediaFinalPorCategoria;
     private long totalHistoricoAtrasados;
+    private BigDecimal totalCustoAmostras;
 
     public static class AtrasadoDTO {
         private Long id;
@@ -58,6 +61,10 @@ public class DashboardDTO {
     public void setAtrasados(List<AtrasadoDTO> atrasados) { this.atrasados = atrasados; }
     public Map<String, Double> getLeadtimeMediaPorCategoria() { return leadtimeMediaPorCategoria; }
     public void setLeadtimeMediaPorCategoria(Map<String, Double> leadtimeMediaPorCategoria) { this.leadtimeMediaPorCategoria = leadtimeMediaPorCategoria; }
+    public Map<String, Double> getLeadtimeMediaFinalPorCategoria() { return leadtimeMediaFinalPorCategoria; }
+    public void setLeadtimeMediaFinalPorCategoria(Map<String, Double> m) { this.leadtimeMediaFinalPorCategoria = m; }
     public long getTotalHistoricoAtrasados() { return totalHistoricoAtrasados; }
     public void setTotalHistoricoAtrasados(long v) { this.totalHistoricoAtrasados = v; }
+    public BigDecimal getTotalCustoAmostras() { return totalCustoAmostras; }
+    public void setTotalCustoAmostras(BigDecimal totalCustoAmostras) { this.totalCustoAmostras = totalCustoAmostras; }
 }

@@ -100,6 +100,11 @@
                         <a th:href="@{/desenvolvimentos/{id}(id=${d.id})}" class="btn btn-sm btn-outline-info">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <a th:if="${d.status.name() == 'APROVADO'}"
+                           th:href="@{/desenvolvimentos/{id}/ficha(id=${d.id})}"
+                           class="btn btn-sm btn-outline-success" title="Ficha Técnica">
+                            <i class="bi bi-file-text"></i>
+                        </a>
                         <a th:href="@{/desenvolvimentos/{id}/editar(id=${d.id})}" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil"></i>
                         </a>

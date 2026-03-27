@@ -53,6 +53,9 @@
                             </div>
                             <div>
                                 <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
+                                <div th:if="${e.custoAmostra != null}" class="small text-warning fw-semibold">
+                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </div>
                                 <div th:if="${e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
                                 </div>
@@ -71,6 +74,11 @@
                 <div class="card-header fw-semibold"><i class="bi bi-scissors"></i> Dados do Tecido</div>
                 <div class="card-body">
                     <form th:action="@{/desenvolvimentos/{id}/tecido(id=${dev.id})}" method="post">
+                        <!-- campos ocultos para preservar dados de preço ao salvar só dados do tecido -->
+                        <input type="hidden" name="preco" th:value="${dadosTecido.preco}"/>
+                        <input type="hidden" name="precoNegociado" th:value="${dadosTecido.precoNegociado}"/>
+                        <input type="hidden" name="valorDolar" th:value="${dadosTecido.valorDolar}"/>
+                        <input type="hidden" name="rendimento" th:value="${dadosTecido.rendimento}"/>
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Cor / Estampa</label>
@@ -110,7 +118,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <label class="form-label fw-semibold">Informações de Compra de Amostra</label>
+                                <label class="form-label fw-semibold">Observações</label>
                                 <textarea name="infoCompraAmostra" class="form-control uppercase-input" rows="3"
                                           th:text="${dadosTecido.infoCompraAmostra}"></textarea>
                             </div>
@@ -122,11 +130,42 @@
                 </div>
             </div>
 
+            <!-- Registrar Etapa -->
+            <div class="card shadow-sm mb-3">
+                <div class="card-header fw-semibold"><i class="bi bi-arrow-right-circle"></i> Registrar Etapa</div>
+                <div class="card-body">
+                    <form th:action="@{/desenvolvimentos/{id}/avancar(id=${dev.id})}" method="post">
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Tipo</label>
+                            <select name="tipo" class="form-select">
+                                <option value="">-- selecione a etapa --</option>
+                                <option th:each="t : ${tiposEtapa}"
+                                        th:if="${t.name() != 'INCLUSAO'}"
+                                        th:value="${t}" th:text="${t}"></option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="dataOcorrencia"
+                               th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
+                        <!-- Custo da amostra — aparece só para AMOSTRA -->
+                        <div class="mb-2" id="campoCustoAmostraTecido" style="display:none">
+                            <label class="form-label fw-semibold">Custo da Amostra (R$)</label>
+                            <input type="number" name="custoAmostra" step="0.01" class="form-control" placeholder="0,00"/>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold">Informações de Compra de Amostra</label>
+                            <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
+                        </div>
+                        <button class="btn btn-primary w-100">Registrar</button>
+                    </form>
+                </div>
+            </div>
+
             <!-- Preço e Negociação -->
             <div class="card shadow-sm mb-3">
                 <div class="card-header fw-semibold"><i class="bi bi-currency-dollar"></i> Preço e Negociação</div>
                 <div class="card-body">
                     <form th:action="@{/desenvolvimentos/{id}/tecido(id=${dev.id})}" method="post">
+                        <input type="hidden" name="origem" value="preco"/>
                         <!-- campos ocultos para preservar os dados do Tecido ao salvar só preços -->
                         <input type="hidden" name="corEstampa" th:value="${dadosTecido.corEstampa}"/>
                         <input type="hidden" name="unidadeMedida" th:value="${dadosTecido.unidadeMedida}"/>
@@ -135,7 +174,6 @@
                         <input type="hidden" name="minimoCompraQtd" th:value="${dadosTecido.minimoCompraQtd}"/>
                         <input type="hidden" name="tipoEstampaId" th:value="${dadosTecido.tipoEstampa != null ? dadosTecido.tipoEstampa.id : ''}"/>
                         <input type="hidden" name="infoCompraAmostra" th:value="${dadosTecido.infoCompraAmostra}"/>
-                        <input type="hidden" name="rendimento" th:value="${dadosTecido.rendimento}"/>
 
                         <div class="row g-2">
                             <div class="col-md-6">
@@ -184,38 +222,19 @@
                 </div>
             </div>
 
-            <!-- Registrar Etapa -->
-            <div class="card shadow-sm mb-3">
-                <div class="card-header fw-semibold"><i class="bi bi-arrow-right-circle"></i> Registrar Etapa</div>
-                <div class="card-body">
-                    <form th:action="@{/desenvolvimentos/{id}/avancar(id=${dev.id})}" method="post">
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Tipo</label>
-                            <select name="tipo" class="form-select">
-                                <option value="">-- selecione a etapa --</option>
-                                <option th:each="t : ${tiposEtapa}"
-                                        th:if="${t.name() != 'INCLUSAO'}"
-                                        th:value="${t}" th:text="${t}"></option>
-                            </select>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Data</label>
-                            <input type="date" name="dataOcorrencia" class="form-control"
-                                   th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Observação</label>
-                            <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
-                        </div>
-                        <button class="btn btn-primary w-100">Registrar</button>
-                    </form>
-                </div>
-            </div>
-
         </div>
     </div>
 
     <script>
+    (function () {
+        const tipoSelect = document.querySelector('select[name="tipo"]');
+        const campoCusto = document.getElementById('campoCustoAmostraTecido');
+        function atualizar() {
+            campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
+        }
+        tipoSelect.addEventListener('change', atualizar);
+        atualizar();
+    }());
     function calcReducao() {
         const preco = parseFloat(document.getElementById('inputPreco').value) || 0;
         const precoNeg = parseFloat(document.getElementById('inputPrecoNeg').value) || 0;
