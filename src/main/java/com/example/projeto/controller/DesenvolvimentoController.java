@@ -2,6 +2,7 @@ package com.example.projeto.controller;
 
 import com.example.projeto.entity.*;
 import com.example.projeto.repository.DadosTecidoRepository;
+import com.example.projeto.repository.DesenvolvimentoRepository;
 import com.example.projeto.repository.EtapaDesenvolvimentoRepository;
 import com.example.projeto.repository.OrcamentoRepository;
 import com.example.projeto.service.*;
@@ -31,6 +32,7 @@ public class DesenvolvimentoController {
     private final EtapaDesenvolvimentoRepository etapaRepository;
     private final OrcamentoRepository orcamentoRepository;
     private final DadosTecidoRepository dadosTecidoRepository;
+    private final DesenvolvimentoRepository desenvolvimentoRepository;
 
     public DesenvolvimentoController(DesenvolvimentoService service,
                                       MarcaService marcaService,
@@ -39,7 +41,8 @@ public class DesenvolvimentoController {
                                       FornecedorService fornecedorService,
                                       EtapaDesenvolvimentoRepository etapaRepository,
                                       OrcamentoRepository orcamentoRepository,
-                                      DadosTecidoRepository dadosTecidoRepository) {
+                                      DadosTecidoRepository dadosTecidoRepository,
+                                      DesenvolvimentoRepository desenvolvimentoRepository) {
         this.service = service;
         this.marcaService = marcaService;
         this.colecaoService = colecaoService;
@@ -48,6 +51,7 @@ public class DesenvolvimentoController {
         this.etapaRepository = etapaRepository;
         this.orcamentoRepository = orcamentoRepository;
         this.dadosTecidoRepository = dadosTecidoRepository;
+        this.desenvolvimentoRepository = desenvolvimentoRepository;
     }
 
     @GetMapping
@@ -183,15 +187,19 @@ public class DesenvolvimentoController {
         }
 
         List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
-        Long menorOrcamentoId = orcamentos.stream()
+        Orcamento melhorOrcamento = orcamentos.stream()
             .filter(o -> o.getValorMinimo() != null)
             .min(Comparator.comparing(Orcamento::getValorMinimo))
-            .map(Orcamento::getId)
             .orElse(null);
+        Long menorOrcamentoId = melhorOrcamento != null ? melhorOrcamento.getId() : null;
+        BigDecimal precoInicialSugerido = dev.getPrecoInicial() != null
+            ? dev.getPrecoInicial()
+            : (melhorOrcamento != null ? melhorOrcamento.getValorMinimo() : null);
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("menorOrcamentoId", menorOrcamentoId);
         model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
         model.addAttribute("fornecedores", fornecedorService.listarTodos());
+        model.addAttribute("precoInicialSugerido", precoInicialSugerido);
         return "desenvolvimentos/detalhe";
     }
 
@@ -243,6 +251,18 @@ public class DesenvolvimentoController {
                                    @RequestParam(required = false) String codigoSystextil2,
                                    @RequestParam(required = false) String codigoSystextil3,
                                    RedirectAttributes ra) {
+        // Verifica duplicatas para cada código informado
+        for (String codigo : new String[]{codigoSystextil1, codigoSystextil2, codigoSystextil3}) {
+            if (codigo != null && !codigo.isBlank()) {
+                List<Desenvolvimento> conflitos = desenvolvimentoRepository.findBySystextilDuplicado(codigo.trim(), id);
+                if (!conflitos.isEmpty()) {
+                    String conflito = conflitos.get(0).getCodigo();
+                    ra.addFlashAttribute("erro", "Código Systêxtil \"" + codigo.trim().toUpperCase()
+                        + "\" já está cadastrado no desenvolvimento " + conflito + ".");
+                    return "redirect:/desenvolvimentos/" + id;
+                }
+            }
+        }
         Desenvolvimento dev = service.buscarPorId(id);
         dev.setCodigoSystextil1(codigoSystextil1);
         dev.setCodigoSystextil2(codigoSystextil2);
@@ -373,6 +393,40 @@ public class DesenvolvimentoController {
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("dataAprovacao", dataAprovacao);
         return "desenvolvimentos/ficha";
+    }
+
+    @PostMapping("/{id}/negociacao")
+    public String salvarNegociacao(@PathVariable Long id,
+                                    @RequestParam(required = false) BigDecimal precoInicial,
+                                    @RequestParam(required = false) BigDecimal precoFinal,
+                                    @RequestParam(required = false) Integer qtdCompraMostruario,
+                                    RedirectAttributes ra) {
+        Desenvolvimento dev = service.buscarPorId(id);
+        dev.setPrecoInicial(precoInicial);
+        dev.setPrecoFinal(precoFinal);
+        dev.setQtdCompraMostruario(qtdCompraMostruario);
+        service.salvar(dev);
+
+        StringBuilder obs = new StringBuilder("NEGOCIAÇÃO");
+        if (precoInicial != null) obs.append(" | Inicial: R$").append(String.format("%.2f", precoInicial).replace('.', ','));
+        if (precoFinal != null)   obs.append(" | Final: R$").append(String.format("%.2f", precoFinal).replace('.', ','));
+        if (precoInicial != null && precoFinal != null && precoInicial.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal pct = precoInicial.subtract(precoFinal)
+                .divide(precoInicial, 4, java.math.RoundingMode.HALF_UP)
+                .multiply(new BigDecimal("100"));
+            obs.append(" | Desconto: ").append(String.format("%.2f", pct).replace('.', ',')).append("%");
+        }
+        if (qtdCompraMostruario != null) obs.append(" | Qtd: ").append(qtdCompraMostruario);
+
+        EtapaDesenvolvimento etapa = new EtapaDesenvolvimento();
+        etapa.setDesenvolvimento(dev);
+        etapa.setTipo(TipoEtapa.NEGOCIACAO);
+        etapa.setDataOcorrencia(LocalDate.now());
+        etapa.setObservacao(obs.toString());
+        etapaRepository.save(etapa);
+
+        ra.addFlashAttribute("sucesso", "Negociação salva.");
+        return "redirect:/desenvolvimentos/" + id;
     }
 
     @PostMapping("/{id}/excluir")

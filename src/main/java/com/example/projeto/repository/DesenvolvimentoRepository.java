@@ -45,4 +45,12 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
 
     @Query("SELECT d FROM Desenvolvimento d LEFT JOIN FETCH d.categoria WHERE d.id = :id")
     java.util.Optional<Desenvolvimento> findByIdFetchingCategoria(@Param("id") Long id);
+
+    @Query("SELECT d FROM Desenvolvimento d WHERE d.id <> :excludeId AND (" +
+           "(:codigo IS NOT NULL AND (" +
+           "  UPPER(d.codigoSystextil1) = UPPER(:codigo) OR " +
+           "  UPPER(d.codigoSystextil2) = UPPER(:codigo) OR " +
+           "  UPPER(d.codigoSystextil3) = UPPER(:codigo)))" +
+           ")")
+    List<Desenvolvimento> findBySystextilDuplicado(@Param("codigo") String codigo, @Param("excludeId") Long excludeId);
 }

@@ -162,6 +162,43 @@ public class DashboardService {
             : etapaRepository.sumCustoAmostraByDesenvolvimentoIds(ids);
         dto.setTotalCustoAmostras(custoAmostras);
 
+        // Negociação: total de desconto e % médio
+        List<Desenvolvimento> comNegociacao = todos.stream()
+            .filter(d -> d.getPrecoInicial() != null && d.getPrecoFinal() != null
+                && d.getPrecoInicial().compareTo(java.math.BigDecimal.ZERO) > 0
+                && d.getQtdCompraMostruario() != null)
+            .toList();
+        java.math.BigDecimal totalDesconto = comNegociacao.stream()
+            .map(d -> d.getPrecoInicial().subtract(d.getPrecoFinal())
+                .multiply(java.math.BigDecimal.valueOf(d.getQtdCompraMostruario())))
+            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        dto.setTotalDescontoNegociado(totalDesconto);
+
+        OptionalDouble mediaDesconto = comNegociacao.stream()
+            .mapToDouble(d -> d.getPrecoInicial().subtract(d.getPrecoFinal())
+                .divide(d.getPrecoInicial(), 4, java.math.RoundingMode.HALF_UP)
+                .multiply(java.math.BigDecimal.valueOf(100))
+                .doubleValue())
+            .average();
+        dto.setPercentualDescontoMedio(mediaDesconto.isPresent() ? mediaDesconto.getAsDouble() : null);
+
+        // Quantidade por marca (inclui todos os status)
+        Map<String, Long> porMarca = todos.stream()
+            .filter(d -> d.getMarca() != null)
+            .collect(Collectors.groupingBy(
+                d -> d.getMarca().getNome(),
+                Collectors.counting()
+            ))
+            .entrySet().stream()
+            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (a, b) -> a,
+                LinkedHashMap::new
+            ));
+        dto.setTotalPorMarca(porMarca);
+
         return dto;
     }
 }

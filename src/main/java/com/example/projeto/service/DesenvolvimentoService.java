@@ -162,6 +162,7 @@ public class DesenvolvimentoService {
             case APROVADO -> StatusDesenvolvimento.APROVADO;
             case CANCELADO -> StatusDesenvolvimento.CANCELADO;
             case LIBERADA -> StatusDesenvolvimento.LIBERADA;
+            case NEGOCIACAO -> throw new IllegalArgumentException("Tipo NEGOCIACAO não avança status");
         };
     }
 }

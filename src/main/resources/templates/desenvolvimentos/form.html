@@ -55,7 +55,9 @@
             <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
                 <select name="status" class="form-select">
-                    <option th:each="s : ${statusValues}" th:value="${s}" th:text="${s}"
+                    <option th:each="s : ${statusValues}"
+                            th:if="${s.name() != 'NOVO'}"
+                            th:value="${s}" th:text="${s}"
                             th:selected="${desenvolvimento.status == s}"></option>
                 </select>
             </div>

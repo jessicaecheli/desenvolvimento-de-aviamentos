@@ -19,9 +19,8 @@
                 <option th:each="c : ${colecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
                         th:selected="${filtroColecaoId != null and filtroColecaoId == c.id}"></option>
             </select>
-            <a th:if="${filtroColecaoId != null or filtroCategoriaMasterId != null}" href="/"
-               class="btn btn-sm btn-outline-secondary" title="Limpar filtros">
-                <i class="bi bi-x"></i>
+            <a href="/?limpar=1" class="btn btn-sm btn-outline-secondary" title="Ver todas as coleções">
+                <i class="bi bi-x"></i> Todas
             </a>
         </form>
     </div>
@@ -69,6 +68,24 @@
                 </div>
             </div>
         </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100" style="background-color:#6f42c1">
+                <div class="card-body text-white">
+                    <div class="fs-4 fw-bold"
+                         th:text="${dashboard.totalDescontoNegociado != null ? 'R$ ' + #numbers.formatDecimal(dashboard.totalDescontoNegociado, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
+                        R$ 0,00
+                    </div>
+                    <div>Total Negociado</div>
+                    <div class="mt-1 small opacity-75"
+                         th:if="${dashboard.percentualDescontoMedio != null}"
+                         th:text="${#numbers.formatDecimal(dashboard.percentualDescontoMedio, 1, 'POINT', 2, 'COMMA') + '% desconto médio'}">
+                    </div>
+                    <div class="mt-1 small opacity-75" th:unless="${dashboard.percentualDescontoMedio != null}">
+                        sem negociações
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -102,6 +119,24 @@
                                 <td>
                                     <span th:class="'badge badge-' + ${entry.key}" th:text="${entry.key}"></span>
                                 </td>
+                                <td class="text-end fw-bold" th:text="${entry.value}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Marca -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-tag"></i> Qtd. Des. por Marca</div>
+                <div class="card-body p-0">
+                    <div th:if="${dashboard.totalPorMarca == null or #maps.isEmpty(dashboard.totalPorMarca)}" class="p-3 text-muted">Sem dados.</div>
+                    <table th:unless="${dashboard.totalPorMarca == null or #maps.isEmpty(dashboard.totalPorMarca)}" class="table table-sm mb-0">
+                        <tbody>
+                            <tr th:each="entry : ${dashboard.totalPorMarca}">
+                                <td th:text="${entry.key}"></td>
                                 <td class="text-end fw-bold" th:text="${entry.value}"></td>
                             </tr>
                         </tbody>

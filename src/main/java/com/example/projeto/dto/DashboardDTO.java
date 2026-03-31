@@ -18,6 +18,9 @@ public class DashboardDTO {
     private Map<String, Double> leadtimeMediaFinalPorCategoria;
     private long totalHistoricoAtrasados;
     private BigDecimal totalCustoAmostras;
+    private BigDecimal totalDescontoNegociado;
+    private Double percentualDescontoMedio;
+    private Map<String, Long> totalPorMarca;
 
     public static class AtrasadoDTO {
         private Long id;
@@ -67,4 +70,10 @@ public class DashboardDTO {
     public void setTotalHistoricoAtrasados(long v) { this.totalHistoricoAtrasados = v; }
     public BigDecimal getTotalCustoAmostras() { return totalCustoAmostras; }
     public void setTotalCustoAmostras(BigDecimal totalCustoAmostras) { this.totalCustoAmostras = totalCustoAmostras; }
+    public BigDecimal getTotalDescontoNegociado() { return totalDescontoNegociado; }
+    public void setTotalDescontoNegociado(BigDecimal totalDescontoNegociado) { this.totalDescontoNegociado = totalDescontoNegociado; }
+    public Double getPercentualDescontoMedio() { return percentualDescontoMedio; }
+    public void setPercentualDescontoMedio(Double percentualDescontoMedio) { this.percentualDescontoMedio = percentualDescontoMedio; }
+    public Map<String, Long> getTotalPorMarca() { return totalPorMarca; }
+    public void setTotalPorMarca(Map<String, Long> totalPorMarca) { this.totalPorMarca = totalPorMarca; }
 }

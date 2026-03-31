@@ -7,5 +7,6 @@ public enum TipoEtapa {
     LIBERADA,
     ALTERACAO,
     APROVADO,
-    CANCELADO
+    CANCELADO,
+    NEGOCIACAO
 }

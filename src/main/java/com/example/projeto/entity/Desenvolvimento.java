@@ -41,6 +41,14 @@ public class Desenvolvimento {
     @Column(name = "data_criacao", nullable = false)
     private LocalDate dataCriacao = LocalDate.now();
 
+    @Column(precision = 19, scale = 2)
+    private java.math.BigDecimal precoInicial;
+
+    @Column(precision = 19, scale = 2)
+    private java.math.BigDecimal precoFinal;
+
+    private Integer qtdCompraMostruario;
+
     @OneToMany(mappedBy = "desenvolvimento", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("dataOcorrencia ASC, id ASC")
     private List<EtapaDesenvolvimento> etapas = new ArrayList<>();
@@ -77,4 +85,10 @@ public class Desenvolvimento {
     public void setEtapas(List<EtapaDesenvolvimento> etapas) { this.etapas = etapas; }
     public List<Orcamento> getOrcamentos() { return orcamentos; }
     public void setOrcamentos(List<Orcamento> orcamentos) { this.orcamentos = orcamentos; }
+    public java.math.BigDecimal getPrecoInicial() { return precoInicial; }
+    public void setPrecoInicial(java.math.BigDecimal precoInicial) { this.precoInicial = precoInicial; }
+    public java.math.BigDecimal getPrecoFinal() { return precoFinal; }
+    public void setPrecoFinal(java.math.BigDecimal precoFinal) { this.precoFinal = precoFinal; }
+    public Integer getQtdCompraMostruario() { return qtdCompraMostruario; }
+    public void setQtdCompraMostruario(Integer qtdCompraMostruario) { this.qtdCompraMostruario = qtdCompraMostruario; }
 }

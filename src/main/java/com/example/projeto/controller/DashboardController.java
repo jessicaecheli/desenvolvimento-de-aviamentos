@@ -27,9 +27,20 @@ public class DashboardController {
     @GetMapping
     public String dashboard(@RequestParam(required = false) Long colecaoId,
                              @RequestParam(required = false) Long categoriaMasterId,
+                             @RequestParam(required = false) String limpar,
                              Model model) {
+        var colecoes = colecaoService.listarTodas();
+
+        // Se nenhum filtro informado e não está limpando, usa a última coleção cadastrada
+        if (colecaoId == null && limpar == null && !colecoes.isEmpty()) {
+            colecaoId = colecoes.stream()
+                .mapToLong(c -> c.getId())
+                .max()
+                .getAsLong();
+        }
+
         model.addAttribute("dashboard", service.gerarDashboard(colecaoId, categoriaMasterId));
-        model.addAttribute("colecoes", colecaoService.listarTodas());
+        model.addAttribute("colecoes", colecoes);
         model.addAttribute("categoriasMaster", categoriaService.listarMasters());
         model.addAttribute("filtroColecaoId", colecaoId);
         model.addAttribute("filtroCategoriaMasterId", categoriaMasterId);

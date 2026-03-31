@@ -143,7 +143,7 @@ public class DataSeeder implements CommandLineRunner {
 
         // AV010 — NOVO (sem etapas ainda)
         Desenvolvimento av010 = dev("AV010", "BOTA CANO LONGO CAMURÇA", zara, inv27, null,
-                StatusDesenvolvimento.NOVO, LocalDate.of(2026, 3, 10));
+                StatusDesenvolvimento.ORCAMENTO, LocalDate.of(2026, 3, 10));
         devRepo.save(av010);
 
         // AV011 — ORÇAMENTO
