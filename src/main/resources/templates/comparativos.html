@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title>Comparativos</title></head>
+<body>
+<main th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-bar-chart-line"></i> Comparativos por Coleção</h2>
+        <a href="/" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar ao Dashboard
+        </a>
+    </div>
+
+    <!-- Formulário de seleção -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" action="/comparativos" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Coleção 1</label>
+                    <select name="col1" class="form-select form-select-sm">
+                        <option value="">— selecione —</option>
+                        <option th:each="c : ${todasColecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
+                                th:selected="${col1 != null and col1 == c.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Coleção 2</label>
+                    <select name="col2" class="form-select form-select-sm">
+                        <option value="">— selecione —</option>
+                        <option th:each="c : ${todasColecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
+                                th:selected="${col2 != null and col2 == c.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Coleção 3 <span class="text-muted fw-normal">(opcional)</span></label>
+                    <select name="col3" class="form-select form-select-sm">
+                        <option value="">— selecione —</option>
+                        <option th:each="c : ${todasColecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
+                                th:selected="${col3 != null and col3 == c.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Coleção 4 <span class="text-muted fw-normal">(opcional)</span></label>
+                    <select name="col4" class="form-select form-select-sm">
+                        <option value="">— selecione —</option>
+                        <option th:each="c : ${todasColecoes}" th:value="${c.id}" th:text="${c.nomeCompleto}"
+                                th:selected="${col4 != null and col4 == c.id}"></option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-dark">
+                        <i class="bi bi-bar-chart-line"></i> Comparar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aviso sem dados -->
+    <div th:if="${!temDados}" class="text-center text-muted py-5">
+        <i class="bi bi-bar-chart-line fs-1 d-block mb-3 opacity-25"></i>
+        Selecione ao menos uma coleção e clique em <strong>Comparar</strong>.
+    </div>
+
+    <!-- Gráficos -->
+    <div th:if="${temDados}">
+
+        <!-- Linha 1: Aprovados | Cancelados | Alterações -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold text-success"><i class="bi bi-check-circle"></i> Aprovados</div>
+                    <div class="card-body"><canvas id="chartAprovados"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold text-danger"><i class="bi bi-x-circle"></i> Cancelados</div>
+                    <div class="card-body"><canvas id="chartCancelados"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold text-warning"><i class="bi bi-arrow-repeat"></i> Alterações</div>
+                    <div class="card-body"><canvas id="chartAlteracoes"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linha 2: Atrasos | Custo Amostras | % Desconto -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold text-danger"><i class="bi bi-clock-history"></i> Contador de Atrasos</div>
+                    <div class="card-body"><canvas id="chartAtrasos"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold text-info"><i class="bi bi-currency-dollar"></i> Custo com Amostras (R$)</div>
+                    <div class="card-body"><canvas id="chartCusto"></canvas></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header fw-semibold" style="color:#6f42c1"><i class="bi bi-percent"></i> % Desconto Médio sobre Itens</div>
+                    <div class="card-body"><canvas id="chartDesconto"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linha 3: Total de Desenvolvimentos -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="bi bi-collection"></i> Total de Desenvolvimentos por Coleção</div>
+                    <div class="card-body" style="height:220px"><canvas id="chartTotalDes"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linha 4: Qtd por Marca -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="bi bi-tag"></i> Qtd. Des. por Marca</div>
+                    <div class="card-body" style="min-height:260px"><canvas id="chartMarca"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linha 5: Qtd por Subcategoria -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold"><i class="bi bi-diagram-3"></i> Qtd. Des. por Subcategoria</div>
+                    <div class="card-body" style="min-height:260px"><canvas id="chartSubcat"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script th:if="${temDados}" th:inline="javascript">
+    (function() {
+        const colNomes      = /*[[${colNomes}]]*/ [];
+        const aprovados     = /*[[${aprovadosData}]]*/ [];
+        const cancelados    = /*[[${canceladosData}]]*/ [];
+        const alteracoes    = /*[[${alteracoesData}]]*/ [];
+        const atrasos       = /*[[${atrasosData}]]*/ [];
+        const custo         = /*[[${custoAmostrasData}]]*/ [];
+        const desconto      = /*[[${descontoMedioData}]]*/ [];
+        const totalDesenv   = /*[[${totalDesenvData}]]*/ [];
+        const marcasLabels  = /*[[${marcasLabels}]]*/ [];
+        const marcasDs      = /*[[${marcasDatasets}]]*/ [];
+        const subcatLabels  = /*[[${subcatLabels}]]*/ [];
+        const subcatDs      = /*[[${subcatDatasets}]]*/ [];
+
+        const CORES_BG = [
+            'rgba(54,162,235,0.75)',
+            'rgba(255,159,64,0.75)',
+            'rgba(75,192,192,0.75)',
+            'rgba(255,99,132,0.75)'
+        ];
+        const CORES_BORDER = [
+            'rgb(54,162,235)',
+            'rgb(255,159,64)',
+            'rgb(75,192,192)',
+            'rgb(255,99,132)'
+        ];
+
+        function simpleBar(id, label, data, color) {
+            new Chart(document.getElementById(id), {
+                type: 'bar',
+                data: {
+                    labels: colNomes,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        backgroundColor: colNomes.map((_, i) => CORES_BG[i % CORES_BG.length]),
+                        borderColor: colNomes.map((_, i) => CORES_BORDER[i % CORES_BORDER.length]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        function groupedBar(id, labels, datasets) {
+            new Chart(document.getElementById(id), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets.map((ds, i) => ({
+                        label: ds.label,
+                        data: ds.data,
+                        backgroundColor: CORES_BG[i % CORES_BG.length],
+                        borderColor: CORES_BORDER[i % CORES_BORDER.length],
+                        borderWidth: 1
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'top' } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+        }
+
+        simpleBar('chartAprovados',  'Aprovados',  aprovados,  CORES_BG[0]);
+        simpleBar('chartCancelados', 'Cancelados', cancelados, CORES_BG[0]);
+        simpleBar('chartAlteracoes', 'Alterações', alteracoes, CORES_BG[0]);
+        simpleBar('chartAtrasos',    'Atrasos',    atrasos,    CORES_BG[0]);
+        simpleBar('chartCusto',      'R$',         custo,      CORES_BG[0]);
+
+        new Chart(document.getElementById('chartDesconto'), {
+            type: 'bar',
+            data: {
+                labels: colNomes,
+                datasets: [{
+                    label: '% Desconto Médio',
+                    data: desconto,
+                    backgroundColor: colNomes.map((_, i) => CORES_BG[i % CORES_BG.length]),
+                    borderColor: colNomes.map((_, i) => CORES_BORDER[i % CORES_BORDER.length]),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { callback: v => v + '%' } } }
+            }
+        });
+
+        new Chart(document.getElementById('chartTotalDes'), {
+            type: 'bar',
+            data: {
+                labels: colNomes,
+                datasets: [{
+                    label: 'Total de Desenvolvimentos',
+                    data: totalDesenv,
+                    backgroundColor: colNomes.map((_, i) => CORES_BG[i % CORES_BG.length]),
+                    borderColor: colNomes.map((_, i) => CORES_BORDER[i % CORES_BORDER.length]),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        groupedBar('chartMarca',  marcasLabels, marcasDs);
+        groupedBar('chartSubcat', subcatLabels, subcatDs);
+    })();
+    </script>
+</main>
+</body>
+</html>

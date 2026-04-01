@@ -21,6 +21,8 @@ public class DashboardDTO {
     private BigDecimal totalDescontoNegociado;
     private Double percentualDescontoMedio;
     private Map<String, Long> totalPorMarca;
+    private Map<String, Long> totalPorSubcategoria;
+    private Map<String, Map<String, Long>> aprovadosPorSubcategoriaFornecedor;
 
     public static class AtrasadoDTO {
         private Long id;
@@ -76,4 +78,8 @@ public class DashboardDTO {
     public void setPercentualDescontoMedio(Double percentualDescontoMedio) { this.percentualDescontoMedio = percentualDescontoMedio; }
     public Map<String, Long> getTotalPorMarca() { return totalPorMarca; }
     public void setTotalPorMarca(Map<String, Long> totalPorMarca) { this.totalPorMarca = totalPorMarca; }
+    public Map<String, Long> getTotalPorSubcategoria() { return totalPorSubcategoria; }
+    public void setTotalPorSubcategoria(Map<String, Long> totalPorSubcategoria) { this.totalPorSubcategoria = totalPorSubcategoria; }
+    public Map<String, Map<String, Long>> getAprovadosPorSubcategoriaFornecedor() { return aprovadosPorSubcategoriaFornecedor; }
+    public void setAprovadosPorSubcategoriaFornecedor(Map<String, Map<String, Long>> m) { this.aprovadosPorSubcategoriaFornecedor = m; }
 }

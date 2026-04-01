@@ -182,6 +182,57 @@ public class DashboardService {
             .average();
         dto.setPercentualDescontoMedio(mediaDesconto.isPresent() ? mediaDesconto.getAsDouble() : null);
 
+        // Quantidade por subcategoria
+        Map<String, Long> porSubcategoria = todos.stream()
+            .filter(d -> d.getCategoria() != null && d.getCategoria().getCategoriaPai() != null)
+            .collect(Collectors.groupingBy(
+                d -> d.getCategoria().getNome(),
+                Collectors.counting()
+            ))
+            .entrySet().stream()
+            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (a, b) -> a,
+                LinkedHashMap::new
+            ));
+        dto.setTotalPorSubcategoria(porSubcategoria);
+
+        // Aprovados por subcategoria e fornecedor
+        List<Desenvolvimento> aprovadosComSubcat = todos.stream()
+            .filter(d -> d.getStatus() == StatusDesenvolvimento.APROVADO
+                && d.getCategoria() != null
+                && d.getCategoria().getCategoriaPai() != null)
+            .toList();
+        Map<String, Map<String, Long>> aprovadosPorSubcatFornecedor = new LinkedHashMap<>();
+        if (!aprovadosComSubcat.isEmpty()) {
+            List<Long> aprovadosIds = aprovadosComSubcat.stream()
+                .map(Desenvolvimento::getId).collect(Collectors.toList());
+            List<EtapaDesenvolvimento> etapasAprov = etapaRepository
+                .findEtapasComOrcamentoPorDesenvolvimentos(aprovadosIds, List.of(TipoEtapa.APROVADO));
+            Map<Long, EtapaDesenvolvimento> etapaPorDev = new LinkedHashMap<>();
+            for (EtapaDesenvolvimento e : etapasAprov) {
+                etapaPorDev.putIfAbsent(e.getDesenvolvimento().getId(), e);
+            }
+            for (Desenvolvimento dev : aprovadosComSubcat) {
+                EtapaDesenvolvimento etapa = etapaPorDev.get(dev.getId());
+                if (etapa == null) continue;
+                String fornecedor = etapa.getOrcamento().getFornecedor();
+                if (fornecedor == null || fornecedor.isBlank()) continue;
+                String subcat = dev.getCategoria().getNome();
+                aprovadosPorSubcatFornecedor
+                    .computeIfAbsent(subcat, k -> new LinkedHashMap<>())
+                    .merge(fornecedor, 1L, Long::sum);
+            }
+            aprovadosPorSubcatFornecedor.replaceAll((k, v) ->
+                v.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new)));
+        }
+        dto.setAprovadosPorSubcategoriaFornecedor(aprovadosPorSubcatFornecedor);
+
         // Quantidade por marca (inclui todos os status)
         Map<String, Long> porMarca = todos.stream()
             .filter(d -> d.getMarca() != null)

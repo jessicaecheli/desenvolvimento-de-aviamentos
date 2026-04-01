@@ -22,6 +22,9 @@
             <a href="/?limpar=1" class="btn btn-sm btn-outline-secondary" title="Ver todas as coleções">
                 <i class="bi bi-x"></i> Todas
             </a>
+            <a href="/comparativos" class="btn btn-sm btn-dark">
+                <i class="bi bi-bar-chart-line"></i> COMPARATIVOS
+            </a>
         </form>
     </div>
 
@@ -71,18 +74,17 @@
         <div class="col-sm-6 col-lg-3">
             <div class="card shadow-sm border-0 h-100" style="background-color:#6f42c1">
                 <div class="card-body text-white">
-                    <div class="fs-4 fw-bold"
+                    <div class="fs-2 fw-bold"
+                         th:if="${dashboard.percentualDescontoMedio != null}"
+                         th:text="${#numbers.formatDecimal(dashboard.percentualDescontoMedio, 1, 'POINT', 2, 'COMMA') + '%'}">
+                    </div>
+                    <div class="fs-2 fw-bold" th:unless="${dashboard.percentualDescontoMedio != null}">-</div>
+                    <div>% desconto médio sobre item</div>
+                    <div class="mt-2 small opacity-75"
                          th:text="${dashboard.totalDescontoNegociado != null ? 'R$ ' + #numbers.formatDecimal(dashboard.totalDescontoNegociado, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
                         R$ 0,00
                     </div>
-                    <div>Total Negociado</div>
-                    <div class="mt-1 small opacity-75"
-                         th:if="${dashboard.percentualDescontoMedio != null}"
-                         th:text="${#numbers.formatDecimal(dashboard.percentualDescontoMedio, 1, 'POINT', 2, 'COMMA') + '% desconto médio'}">
-                    </div>
-                    <div class="mt-1 small opacity-75" th:unless="${dashboard.percentualDescontoMedio != null}">
-                        sem negociações
-                    </div>
+                    <div class="small opacity-75">Negociação - Compra dos Mostruários</div>
                 </div>
             </div>
         </div>
@@ -141,6 +143,58 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por Subcategoria -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-diagram-3"></i> Qtd. Des. por Subcategoria</div>
+                <div class="card-body p-0">
+                    <div th:if="${dashboard.totalPorSubcategoria == null or #maps.isEmpty(dashboard.totalPorSubcategoria)}" class="p-3 text-muted">Sem dados.</div>
+                    <table th:unless="${dashboard.totalPorSubcategoria == null or #maps.isEmpty(dashboard.totalPorSubcategoria)}" class="table table-sm mb-0">
+                        <tbody>
+                            <tr th:each="entry : ${dashboard.totalPorSubcategoria}">
+                                <td th:text="${entry.key}"></td>
+                                <td class="text-end fw-bold" th:text="${entry.value}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aprovados por Fornecedor -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold"><i class="bi bi-check2-circle"></i> Aprovados por Fornecedor</div>
+                <div class="card-body p-0">
+                    <div th:if="${dashboard.aprovadosPorSubcategoriaFornecedor == null or #maps.isEmpty(dashboard.aprovadosPorSubcategoriaFornecedor)}"
+                         class="p-3 text-muted">Sem dados.</div>
+                    <div th:unless="${dashboard.aprovadosPorSubcategoriaFornecedor == null or #maps.isEmpty(dashboard.aprovadosPorSubcategoriaFornecedor)}">
+                        <div class="px-3 pt-2 pb-2">
+                            <select class="form-select form-select-sm" onchange="filtrarAprovSubcat(this)">
+                                <option value="">Todas as subcategorias</option>
+                                <option th:each="entry : ${dashboard.aprovadosPorSubcategoriaFornecedor}"
+                                        th:value="${entry.key}" th:text="${entry.key}"></option>
+                            </select>
+                        </div>
+                        <div th:each="entry : ${dashboard.aprovadosPorSubcategoriaFornecedor}"
+                             th:attr="data-subcat=${entry.key}"
+                             class="aprov-subcat-block">
+                            <div class="px-3 small fw-semibold text-muted border-top pt-1"
+                                 th:text="${entry.key}"></div>
+                            <table class="table table-sm mb-0">
+                                <tbody>
+                                    <tr th:each="forn : ${entry.value}">
+                                        <td th:text="${forn.key}"></td>
+                                        <td class="text-end fw-bold" th:text="${forn.value}"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -210,6 +264,14 @@
             </tbody>
         </table>
     </div>
+    <script>
+    function filtrarAprovSubcat(sel) {
+        var val = sel.value;
+        document.querySelectorAll('.aprov-subcat-block').forEach(function(el) {
+            el.style.display = (!val || el.dataset.subcat === val) ? '' : 'none';
+        });
+    }
+    </script>
 </main>
 </body>
 </html>
