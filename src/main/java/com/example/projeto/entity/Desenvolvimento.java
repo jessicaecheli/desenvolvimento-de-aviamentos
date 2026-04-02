@@ -41,6 +41,9 @@ public class Desenvolvimento {
     @Column(name = "data_criacao", nullable = false)
     private LocalDate dataCriacao = LocalDate.now();
 
+    @Column(name = "previsao_amostra")
+    private LocalDate previsaoAmostra;
+
     @Column(precision = 19, scale = 2)
     private java.math.BigDecimal precoInicial;
 
@@ -81,6 +84,8 @@ public class Desenvolvimento {
     public void setStatus(StatusDesenvolvimento status) { this.status = status; }
     public LocalDate getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDate dataCriacao) { this.dataCriacao = dataCriacao; }
+    public LocalDate getPrevisaoAmostra() { return previsaoAmostra; }
+    public void setPrevisaoAmostra(LocalDate previsaoAmostra) { this.previsaoAmostra = previsaoAmostra; }
     public List<EtapaDesenvolvimento> getEtapas() { return etapas; }
     public void setEtapas(List<EtapaDesenvolvimento> etapas) { this.etapas = etapas; }
     public List<Orcamento> getOrcamentos() { return orcamentos; }

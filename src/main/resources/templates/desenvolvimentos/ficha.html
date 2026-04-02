@@ -5,16 +5,17 @@
     <title th:text="'Ficha - ' + ${dev.codigo}">Ficha Técnica</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; color: #000; }
-        .ficha { width: 100%; max-width: 750px; margin: 0 auto; border-collapse: collapse; }
-        .ficha td, .ficha th { border: 1px solid #000; padding: 3px 6px; }
-        .titulo { font-size: 16px; font-weight: bold; text-align: center; }
-        .header-empresa { font-size: 13px; font-weight: bold; text-align: center; line-height: 1.4; }
+        .ficha { width: 100%; max-width: 760px; margin: 0 auto; border-collapse: collapse; table-layout: fixed; }
+        .ficha td { border: 1px solid #000; padding: 4px 7px; vertical-align: middle; }
+        .titulo { font-size: 15px; font-weight: bold; text-align: center; }
+        .logo { font-size: 12px; font-weight: bold; text-align: center; line-height: 1.6; }
         .label { font-weight: bold; white-space: nowrap; }
-        .campo { width: 100%; border: none; font-size: 11px; font-family: Arial, sans-serif; background: transparent; padding: 0; }
+        .campo { border: none; font-size: 11px; font-family: Arial, sans-serif; background: transparent; padding: 0; }
         .campo:focus { outline: none; background: #fffde7; }
-        .secao-amostra { text-align: center; font-weight: bold; font-size: 13px; letter-spacing: 4px; }
-        .caixa-amostra { height: 120px; }
-        .rodape-texto { font-size: 9px; text-align: center; }
+        .secao { text-align: center; font-weight: bold; font-size: 13px; letter-spacing: 4px; padding: 5px; }
+        .secao-compra { text-align: center; font-weight: bold; font-size: 12px; padding: 5px; }
+        .caixa-amostra { height: 150px; }
+        .rodape-texto { font-size: 9px; text-align: center; font-style: italic; padding: 5px; }
         .btn-imprimir { margin: 16px auto; display: block; width: 200px; padding: 8px; font-size: 14px; cursor: pointer; }
         @media print {
             .no-print { display: none !important; }
@@ -31,122 +32,179 @@
 </div>
 
 <table class="ficha">
+
     <!-- Cabeçalho -->
     <tr>
-        <td style="width:18%" rowspan="2" class="header-empresa">NOME DA<br/>EMPRESA</td>
-        <td style="width:52%" rowspan="2" class="titulo">APROVAÇÃO DE AVIAMENTOS</td>
-        <td style="width:15%" class="label">Código</td>
-        <td style="width:15%">RQ-121</td>
-    </tr>
-    <tr>
-        <td class="label">Página</td>
-        <td>Página 1 de 1</td>
-    </tr>
-    <tr>
-        <td colspan="2" style="text-align:center;">
-            <span class="label">Revisão: </span>01 &nbsp;&nbsp;
-            <span class="label">Data em Vigor: </span>
-            <span th:text="${dataAprovacao != null ? #temporals.format(dataAprovacao,'dd/MM/yyyy') : '--/--/----'}"></span>
+        <td style="width:25%" class="logo">LOGO EMPRESA</td>
+        <td style="width:50%" class="titulo">FICHA CADASTRO DE AVIAMENTOS</td>
+        <td style="width:25%; text-align:center; line-height:1.8;">
+            <div class="label">RQ-121</div>
+            <div>01/04/2026</div>
         </td>
-        <td class="label">Setor</td>
-        <td>Compras</td>
     </tr>
 
-    <!-- Descrição / Cor / Cód. Systêxtil -->
+    <!-- Descrição / Coleção -->
     <tr>
-        <td><span class="label">Descrição: </span><span th:text="${dev.descricao}"></span></td>
-        <td><span class="label">Cor: </span><input class="campo" type="text" placeholder=""/></td>
         <td colspan="2">
-            <span class="label">Cód. Systêxtil: </span>
-            <span th:text="${dev.codigoSystextil1 != null ? dev.codigoSystextil1 : ''}"></span>
-            <span th:if="${dev.codigoSystextil2 != null}" th:text="' / ' + ${dev.codigoSystextil2}"></span>
-            <span th:if="${dev.codigoSystextil3 != null}" th:text="' / ' + ${dev.codigoSystextil3}"></span>
+            <span class="label">Descrição: </span>
+            <input class="campo" type="text" style="width:77%"/>
+        </td>
+        <td>
+            <span class="label">Coleção: </span>
+            <input class="campo" type="text" style="width:65%"
+                   th:value="${dev.colecao != null ? dev.colecao.nomeCompleto : ''}"/>
         </td>
     </tr>
 
-    <!-- Medida / Complemento / Coleção -->
+    <!-- Código Systêxtil -->
     <tr>
-        <td><span class="label">Medida: </span><input class="campo" type="text" style="width:70%" placeholder=""/></td>
-        <td><span class="label">Complemento: </span><input class="campo" type="text" style="width:60%" placeholder=""/></td>
-        <td colspan="2"><span class="label">Coleção: </span><span th:text="${dev.colecao != null ? dev.colecao.nomeCompleto : ''}"></span></td>
+        <td colspan="3">
+            <span class="label">Código Systêxtil: </span>
+            <input class="campo" type="text" style="width:82%"
+                   th:value="${(dev.codigoSystextil1 != null ? dev.codigoSystextil1 : '') +
+                               (dev.codigoSystextil2 != null and !#strings.isEmpty(dev.codigoSystextil2) ? ' / ' + dev.codigoSystextil2 : '') +
+                               (dev.codigoSystextil3 != null and !#strings.isEmpty(dev.codigoSystextil3) ? ' / ' + dev.codigoSystextil3 : '')}"/>
+        </td>
     </tr>
 
-    <!-- Marca / Compra Most -->
+    <!-- Marca / QTD Ref/Consumo -->
     <tr>
-        <td colspan="2"><span class="label">Marca: </span><span th:text="${dev.marca != null ? dev.marca.nome : ''}"></span></td>
-        <td colspan="2"><span class="label">Compra Most: </span><input class="campo" type="text" style="width:60%" placeholder=""/></td>
-    </tr>
-
-    <!-- Ref./Consumo -->
-    <tr>
-        <td colspan="4"><span class="label">Ref./Consumo: </span><input class="campo" type="text" style="width:80%" placeholder=""/></td>
+        <td style="width:50%">
+            <span class="label">Marca: </span>
+            <input class="campo" type="text" style="width:78%"
+                   th:value="${dev.marca != null ? dev.marca.nome : ''}"/>
+        </td>
+        <td colspan="2">
+            <span class="label">QTD Ref/Consumo: </span>
+            <input class="campo" type="text" style="width:68%"/>
+        </td>
     </tr>
 
     <!-- Fornecedor 1 -->
-    <tr th:if="${orcamentos.size() > 0}">
+    <tr>
         <td colspan="2">
             <span class="label">Fornecedor 1: </span>
-            <span th:text="${orcamentos[0].fornecedor != null ? orcamentos[0].fornecedor : ''}"></span>
+            <input class="campo" type="text" style="width:74%"
+                   th:value="${orcamentoAprovado != null and orcamentoAprovado.fornecedor != null ? orcamentoAprovado.fornecedor : ''}"/>
         </td>
-        <td><span class="label">Código: </span><input class="campo" type="text" style="width:60%" placeholder=""/></td>
-        <td><span class="label">Mínimo: </span><input class="campo" type="text" style="width:50%" placeholder="0,00"/></td>
+        <td>
+            <span class="label">Código: </span>
+            <input class="campo" type="text" style="width:62%"/>
+        </td>
     </tr>
-    <tr th:if="${orcamentos.size() > 0}">
-        <td colspan="4"><span class="label">Observações: </span><span th:text="${orcamentos[0].observacao != null ? orcamentos[0].observacao : ''}"></span></td>
+    <tr>
+        <td style="width:33%">
+            <span class="label">Mínimo: </span>
+            <input class="campo" type="text" style="width:62%"
+                   th:value="${orcamentoAprovado != null and orcamentoAprovado.quantidade != null ? orcamentoAprovado.quantidade : ''}"/>
+        </td>
+        <td style="width:34%">
+            <span class="label">Valor Inicial: </span>
+            <input class="campo" type="text" style="width:60%"
+                   th:value="${dev.precoInicial != null ? 'R$ ' + #numbers.formatDecimal(dev.precoInicial, 1, 'POINT', 2, 'COMMA') : (orcamentoAprovado != null and orcamentoAprovado.valorMinimo != null ? 'R$ ' + #numbers.formatDecimal(orcamentoAprovado.valorMinimo, 1, 'POINT', 2, 'COMMA') : '')}"/>
+        </td>
+        <td style="width:33%">
+            <div style="display:flex; align-items:center; gap:4px;">
+                <span class="label" style="white-space:nowrap;">Valor Negociado: </span>
+                <input class="campo" type="text" style="flex:1; min-width:0;"
+                       th:value="${dev.precoFinal != null ? 'R$ ' + #numbers.formatDecimal(dev.precoFinal, 1, 'POINT', 2, 'COMMA') : ''}"/>
+            </div>
+        </td>
     </tr>
-    <tr th:if="${orcamentos.size() > 0}">
-        <td colspan="4">
-            <span class="label">Valor (inicial): </span>
-            <span th:text="${orcamentos[0].valor != null ? 'R$ ' + #numbers.formatDecimal(orcamentos[0].valor, 1, 'POINT', 2, 'COMMA') : ''}"></span>
+    <tr>
+        <td colspan="3">
+            <span class="label">Observações: </span>
+            <input class="campo" type="text" style="width:88%"/>
         </td>
     </tr>
 
     <!-- Fornecedor 2 -->
-    <tr th:if="${orcamentos.size() > 1}">
+    <tr>
         <td colspan="2">
             <span class="label">Fornecedor 2: </span>
-            <span th:text="${orcamentos[1].fornecedor != null ? orcamentos[1].fornecedor : ''}"></span>
+            <input class="campo" type="text" style="width:74%"/>
         </td>
-        <td><span class="label">Código: </span><input class="campo" type="text" style="width:60%" placeholder=""/></td>
-        <td><span class="label">Mínimo: </span><input class="campo" type="text" style="width:50%" placeholder="0,00"/></td>
+        <td>
+            <span class="label">Código: </span>
+            <input class="campo" type="text" style="width:62%"/>
+        </td>
     </tr>
-    <tr th:if="${orcamentos.size() > 1}">
-        <td colspan="4"><span class="label">Observações: </span><span th:text="${orcamentos[1].observacao != null ? orcamentos[1].observacao : ''}"></span></td>
+    <tr>
+        <td>
+            <span class="label">Mínimo: </span>
+            <input class="campo" type="text" style="width:62%"/>
+        </td>
+        <td>
+            <span class="label">Valor Inicial: </span>
+            <input class="campo" type="text" style="width:60%"/>
+        </td>
+        <td>
+            <span class="label">Valor Neg: </span>
+            <input class="campo" type="text" style="width:60%"/>
+        </td>
     </tr>
-    <tr th:if="${orcamentos.size() > 1}">
-        <td colspan="4">
-            <span class="label">Valor (inicial): </span>
-            <span th:text="${orcamentos[1].valor != null ? 'R$ ' + #numbers.formatDecimal(orcamentos[1].valor, 1, 'POINT', 2, 'COMMA') : ''}"></span>
+    <tr>
+        <td colspan="3">
+            <span class="label">Observações: </span>
+            <input class="campo" type="text" style="width:88%"/>
         </td>
     </tr>
 
     <!-- Seção AMOSTRA -->
     <tr>
-        <td colspan="4" class="secao-amostra">A M O S T R A</td>
+        <td colspan="3" class="secao">A M O S T R A</td>
     </tr>
     <tr>
-        <td colspan="4" class="caixa-amostra"></td>
+        <td colspan="3" class="caixa-amostra"></td>
+    </tr>
+    <tr>
+        <td colspan="3" class="rodape-texto">
+            Arquivar no setor de Compras, meio físico, pasta catálogo. Permanente.
+        </td>
+    </tr>
+
+    <!-- Seção COMPRA MOSTRUÁRIO -->
+    <tr>
+        <td colspan="3" class="secao-compra">COMPRA MOSTRUÁRIO</td>
+    </tr>
+    <tr>
+        <td colspan="3" style="padding:0;">
+            <div style="display:flex; align-items:center;">
+                <div style="width:50%; padding:4px 7px; border-right:1px solid #000;">
+                    <span class="label">Fornecedor: </span>
+                    <input class="campo" type="text" style="width:70%"
+                           th:value="${orcamentoAprovado != null and orcamentoAprovado.fornecedor != null ? orcamentoAprovado.fornecedor : ''}"/>
+                </div>
+                <div style="width:25%; padding:4px 7px; border-right:1px solid #000; display:flex; align-items:center; gap:4px;">
+                    <span class="label" style="white-space:nowrap;">Data Entrega: </span>
+                    <input class="campo" type="text" style="flex:1; min-width:0;"/>
+                </div>
+                <div style="width:25%; padding:4px 7px;">
+                    <span class="label">Quantidade: </span>
+                    <input class="campo" type="text" style="width:40%"/>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3">
+            <span class="label">Observação: </span>
+            <input class="campo" type="text" style="width:90%"/>
+        </td>
     </tr>
 
     <!-- Assinatura / Data -->
     <tr>
-        <td colspan="3">
-            <span class="label">Ass. Gerência Compras: </span>
-            <span style="display:inline-block; width:250px; border-bottom:1px solid #000;">&nbsp;</span>
+        <td colspan="2">
+            <span class="label">Ass. Gerência: </span>
+            <input class="campo" type="text" style="width:74%"/>
         </td>
         <td>
-            <span class="label">Data Aprovação: </span>
-            <span th:text="${dataAprovacao != null ? #temporals.format(dataAprovacao,'dd/MM/yyyy') : '--/--/----'}"></span>
+            <span class="label">Data: </span>
+            <input class="campo" type="text" style="width:55%" placeholder="__/__/____"/>
         </td>
     </tr>
 
-    <!-- Rodapé -->
-    <tr>
-        <td colspan="4" class="rodape-texto">
-            ARQUIVAMENTO: Arquivar no setor de Compras, meio físico, pasta catálogo. Permanente.
-        </td>
-    </tr>
 </table>
-
 </body>
 </html>

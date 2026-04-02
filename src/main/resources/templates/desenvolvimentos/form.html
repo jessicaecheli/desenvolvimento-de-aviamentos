@@ -61,25 +61,52 @@
                             th:selected="${desenvolvimento.status == s}"></option>
                 </select>
             </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Previsão Amostra</label>
+                <input type="date" id="previsaoAmostra" name="previsaoAmostra" class="form-control"
+                       th:value="${desenvolvimento.previsaoAmostra}"/>
+                <div class="form-text text-muted">Calculado automaticamente pela data de criação + lead time da subcategoria. Pode ser ajustado manualmente.</div>
+            </div>
             <div class="d-flex gap-2">
                 <button class="btn btn-primary">Salvar</button>
                 <a href="/desenvolvimentos" class="btn btn-outline-secondary">Cancelar</a>
             </div>
         </form>
     </div>
-<script>
+<script th:inline="javascript">
 (function () {
+    const prazos = /*[[${prazoPorSubcategoria}]]*/ {};
+
     const master = document.getElementById('selectMaster');
     const sub    = document.getElementById('selectSubcategoria');
     const wrap   = document.getElementById('wrapSubcategoria');
-    const allOpts = Array.from(sub.options).slice(1); // exclui o placeholder
+    const previsao = document.getElementById('previsaoAmostra');
+    const allOpts = Array.from(sub.options).slice(1);
+
+    function adicionarDiasUteis(dataInicio, dias) {
+        let data = new Date(dataInicio);
+        data.setHours(12, 0, 0, 0);
+        let contados = 0;
+        while (contados < dias) {
+            data.setDate(data.getDate() + 1);
+            const dow = data.getDay();
+            if (dow !== 0 && dow !== 6) contados++;
+        }
+        return data.toISOString().substring(0, 10);
+    }
+
+    function calcularPrevisao() {
+        const subcatId = sub.value;
+        if (!subcatId || !prazos[subcatId]) return;
+        const prazo = prazos[subcatId];
+        const hoje = new Date().toISOString().substring(0, 10);
+        previsao.value = adicionarDiasUteis(hoje, prazo);
+    }
 
     function filtrar() {
         const masterId = master.value;
-        // mostra/oculta o campo de subcategoria
         wrap.style.display = masterId ? 'block' : 'none';
         if (!masterId) sub.value = '';
-        // remove todas exceto placeholder
         while (sub.options.length > 1) sub.remove(1);
         allOpts.forEach(function(opt) {
             if (!masterId || opt.dataset.master === masterId) {
@@ -93,7 +120,11 @@
         filtrar();
     });
 
-    // Na carga da página, filtra pelo master já selecionado (modo edição)
+    sub.addEventListener('change', function() {
+        // só auto-calcula se o campo previsão estiver vazio (novo) ou se o usuário não editou
+        calcularPrevisao();
+    });
+
     filtrar();
 })();
 </script>

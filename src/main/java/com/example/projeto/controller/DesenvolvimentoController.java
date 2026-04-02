@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/desenvolvimentos")
@@ -83,8 +84,15 @@ public class DesenvolvimentoController {
             }
         }
 
+        Map<Long, LocalDate> previsaoAmostraPorDev = new HashMap<>();
+        for (Desenvolvimento d : lista) {
+            LocalDate prev = service.calcularPrevisaoAmostra(d);
+            if (prev != null) previsaoAmostraPorDev.put(d.getId(), prev);
+        }
+
         model.addAttribute("desenvolvimentos", lista);
         model.addAttribute("fornecedoresPorDev", fornecedoresPorDev);
+        model.addAttribute("previsaoAmostraPorDev", previsaoAmostraPorDev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categoriasMaster", categoriaService.listarMasters());
@@ -106,8 +114,13 @@ public class DesenvolvimentoController {
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categoriasMaster", categoriaService.listarMasters());
-        model.addAttribute("subcategorias", categoriaService.listarSubcategorias());
+        List<Categoria> subcategorias = categoriaService.listarSubcategorias();
+        model.addAttribute("subcategorias", subcategorias);
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
+        Map<Long, Integer> prazoPorSubcategoria = subcategorias.stream()
+            .filter(c -> c.getPrazoDiasUteis() != null)
+            .collect(Collectors.toMap(Categoria::getId, Categoria::getPrazoDiasUteis));
+        model.addAttribute("prazoPorSubcategoria", prazoPorSubcategoria);
         return "desenvolvimentos/form";
     }
 
@@ -118,8 +131,13 @@ public class DesenvolvimentoController {
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categoriasMaster", categoriaService.listarMasters());
-        model.addAttribute("subcategorias", categoriaService.listarSubcategorias());
+        List<Categoria> subcategorias = categoriaService.listarSubcategorias();
+        model.addAttribute("subcategorias", subcategorias);
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
+        Map<Long, Integer> prazoPorSubcategoria = subcategorias.stream()
+            .filter(c -> c.getPrazoDiasUteis() != null)
+            .collect(Collectors.toMap(Categoria::getId, Categoria::getPrazoDiasUteis));
+        model.addAttribute("prazoPorSubcategoria", prazoPorSubcategoria);
         return "desenvolvimentos/form";
     }
 
@@ -134,6 +152,7 @@ public class DesenvolvimentoController {
                          @RequestParam(required = false) String codigoSystextil1,
                          @RequestParam(required = false) String codigoSystextil2,
                          @RequestParam(required = false) String codigoSystextil3,
+                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate previsaoAmostra,
                          RedirectAttributes ra) {
         Desenvolvimento dev;
         if (id != null) {
@@ -150,6 +169,7 @@ public class DesenvolvimentoController {
         dev.setCodigoSystextil1(codigoSystextil1);
         dev.setCodigoSystextil2(codigoSystextil2);
         dev.setCodigoSystextil3(codigoSystextil3);
+        dev.setPrevisaoAmostra(previsaoAmostra);
         if (id == null) {
             service.criarNovo(dev);
         } else {
@@ -385,13 +405,13 @@ public class DesenvolvimentoController {
         Desenvolvimento dev = service.buscarPorId(id);
         List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
         List<EtapaDesenvolvimento> etapas = etapaRepository.findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
-        LocalDate dataAprovacao = etapas.stream()
+        EtapaDesenvolvimento etapaAprovado = etapas.stream()
             .filter(e -> e.getTipo() == TipoEtapa.APROVADO)
-            .map(EtapaDesenvolvimento::getDataOcorrencia)
             .findFirst().orElse(null);
+        Orcamento orcamentoAprovado = (etapaAprovado != null) ? etapaAprovado.getOrcamento() : null;
         model.addAttribute("dev", dev);
         model.addAttribute("orcamentos", orcamentos);
-        model.addAttribute("dataAprovacao", dataAprovacao);
+        model.addAttribute("orcamentoAprovado", orcamentoAprovado);
         return "desenvolvimentos/ficha";
     }
 

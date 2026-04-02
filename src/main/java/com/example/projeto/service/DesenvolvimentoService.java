@@ -93,26 +93,36 @@ public class DesenvolvimentoService {
             dev.getStatus() != StatusDesenvolvimento.ALTERACAO) {
             return false;
         }
+        if (dev.getPrevisaoAmostra() != null) {
+            return LocalDate.now().isAfter(dev.getPrevisaoAmostra());
+        }
+        // fallback: cálculo pela data da primeira etapa AMOSTRA + prazo da subcategoria
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return false;
-
         if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return false;
         long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
         return diasUteis > dev.getCategoria().getPrazoDiasUteis();
     }
 
     public long diasAtraso(Desenvolvimento dev) {
+        if (dev.getPrevisaoAmostra() != null) {
+            return Math.max(0, calcularDiasUteis(dev.getPrevisaoAmostra(), LocalDate.now()) - 1);
+        }
+        // fallback
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return 0;
-
         if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return 0;
         long diasUteis = calcularDiasUteis(primeiraAmostra.get().getDataOcorrencia(), LocalDate.now());
         return Math.max(0, diasUteis - dev.getCategoria().getPrazoDiasUteis());
     }
 
     public long diasRestantes(Desenvolvimento dev) {
+        if (dev.getPrevisaoAmostra() != null) {
+            return calcularDiasUteis(LocalDate.now(), dev.getPrevisaoAmostra()) - 1;
+        }
+        // fallback
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
             .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
         if (primeiraAmostra.isEmpty()) return Long.MAX_VALUE;
@@ -138,6 +148,27 @@ public class DesenvolvimentoService {
                 ? cat.getCategoriaPai().getNome()
                 : cat.getNome();
         return "TECIDOS".equalsIgnoreCase(masterNome);
+    }
+
+    public LocalDate calcularPrevisaoAmostra(Desenvolvimento dev) {
+        if (dev.getDataCriacao() == null || dev.getCategoria() == null
+                || dev.getCategoria().getPrazoDiasUteis() == null) {
+            return null;
+        }
+        return adicionarDiasUteis(dev.getDataCriacao(), dev.getCategoria().getPrazoDiasUteis());
+    }
+
+    public LocalDate adicionarDiasUteis(LocalDate inicio, int diasUteis) {
+        LocalDate data = inicio;
+        int contados = 0;
+        while (contados < diasUteis) {
+            data = data.plusDays(1);
+            DayOfWeek dow = data.getDayOfWeek();
+            if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) {
+                contados++;
+            }
+        }
+        return data;
     }
 
     public long calcularDiasUteis(LocalDate inicio, LocalDate fim) {

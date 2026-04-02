@@ -78,12 +78,12 @@
                 <tr>
                     <th>Código</th><th>Descrição</th><th>Marca</th>
                     <th>Coleção</th><th>Categoria</th><th>Status</th>
-                    <th>Fornecedor</th><th>Criado em</th><th class="text-end">Ações</th>
+                    <th>Fornecedor</th><th>Criado em</th><th>Prev. Amostra</th><th class="text-end">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:if="${#lists.isEmpty(desenvolvimentos)}">
-                    <td colspan="9" class="text-center text-muted py-3">Nenhum desenvolvimento encontrado.</td>
+                    <td colspan="10" class="text-center text-muted py-3">Nenhum desenvolvimento encontrado.</td>
                 </tr>
                 <tr th:each="d : ${desenvolvimentos}">
                     <td>
@@ -99,6 +99,7 @@
                     </td>
                     <td th:text="${fornecedoresPorDev[d.id]}"></td>
                     <td th:text="${#temporals.format(d.dataCriacao,'dd/MM/yyyy')}"></td>
+                    <td th:text="${d.previsaoAmostra != null ? #temporals.format(d.previsaoAmostra,'dd/MM/yyyy') : (previsaoAmostraPorDev[d.id] != null ? #temporals.format(previsaoAmostraPorDev[d.id],'dd/MM/yyyy') : '-')}"></td>
                     <td class="text-end">
                         <a th:href="@{/desenvolvimentos/{id}(id=${d.id})}" class="btn btn-sm btn-outline-info">
                             <i class="bi bi-eye"></i>
