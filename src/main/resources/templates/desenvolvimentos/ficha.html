@@ -14,7 +14,7 @@
         .campo:focus { outline: none; background: #fffde7; }
         .secao { text-align: center; font-weight: bold; font-size: 13px; letter-spacing: 4px; padding: 5px; }
         .secao-compra { text-align: center; font-weight: bold; font-size: 12px; padding: 5px; }
-        .caixa-amostra { height: 150px; }
+        .caixa-amostra { height: calc(150px + 2cm); }
         .rodape-texto { font-size: 9px; text-align: center; font-style: italic; padding: 5px; }
         .btn-imprimir { margin: 16px auto; display: block; width: 200px; padding: 8px; font-size: 14px; cursor: pointer; }
         @media print {
@@ -69,14 +69,18 @@
 
     <!-- Marca / QTD Ref/Consumo -->
     <tr>
-        <td style="width:50%">
-            <span class="label">Marca: </span>
-            <input class="campo" type="text" style="width:78%"
-                   th:value="${dev.marca != null ? dev.marca.nome : ''}"/>
-        </td>
-        <td colspan="2">
-            <span class="label">QTD Ref/Consumo: </span>
-            <input class="campo" type="text" style="width:68%"/>
+        <td colspan="3" style="padding:0;">
+            <div style="display:flex;">
+                <div style="width:50%; padding:4px 7px; border-right:1px solid #000;">
+                    <span class="label">Marca: </span>
+                    <input class="campo" type="text" style="width:78%"
+                           th:value="${dev.marca != null ? dev.marca.nome : ''}"/>
+                </div>
+                <div style="width:50%; padding:4px 7px;">
+                    <span class="label">QTD Ref/Consumo: </span>
+                    <input class="campo" type="text" style="width:50%"/>
+                </div>
+            </div>
         </td>
     </tr>
 
@@ -130,17 +134,19 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td style="width:33%">
             <span class="label">Mínimo: </span>
             <input class="campo" type="text" style="width:62%"/>
         </td>
-        <td>
+        <td style="width:34%">
             <span class="label">Valor Inicial: </span>
             <input class="campo" type="text" style="width:60%"/>
         </td>
-        <td>
-            <span class="label">Valor Neg: </span>
-            <input class="campo" type="text" style="width:60%"/>
+        <td style="width:33%">
+            <div style="display:flex; align-items:center; gap:4px;">
+                <span class="label" style="white-space:nowrap;">Valor Negociado: </span>
+                <input class="campo" type="text" style="flex:1; min-width:0;"/>
+            </div>
         </td>
     </tr>
     <tr>
@@ -201,7 +207,7 @@
         </td>
         <td>
             <span class="label">Data: </span>
-            <input class="campo" type="text" style="width:55%" placeholder="__/__/____"/>
+            <input class="campo" type="text" style="width:75%" placeholder="__/__/____"/>
         </td>
     </tr>
 
