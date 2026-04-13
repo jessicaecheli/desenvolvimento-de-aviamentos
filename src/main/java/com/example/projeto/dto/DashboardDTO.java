@@ -13,6 +13,7 @@ public class DashboardDTO {
     private long totalAprovados;
     private long totalCancelados;
     private long totalComAlteracao;
+    private long totalComRepeticao;
     private List<AtrasadoDTO> atrasados;
     private Map<String, Double> leadtimeMediaPorCategoria;
     private Map<String, Double> leadtimeMediaFinalPorCategoria;
@@ -62,6 +63,8 @@ public class DashboardDTO {
     public void setTotalCancelados(long totalCancelados) { this.totalCancelados = totalCancelados; }
     public long getTotalComAlteracao() { return totalComAlteracao; }
     public void setTotalComAlteracao(long totalComAlteracao) { this.totalComAlteracao = totalComAlteracao; }
+    public long getTotalComRepeticao() { return totalComRepeticao; }
+    public void setTotalComRepeticao(long totalComRepeticao) { this.totalComRepeticao = totalComRepeticao; }
     public List<AtrasadoDTO> getAtrasados() { return atrasados; }
     public void setAtrasados(List<AtrasadoDTO> atrasados) { this.atrasados = atrasados; }
     public Map<String, Double> getLeadtimeMediaPorCategoria() { return leadtimeMediaPorCategoria; }

@@ -1,9 +1,9 @@
 package com.example.projeto.entity;
 
-import com.example.projeto.entity.Categoria;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "dados_tecido")
@@ -25,16 +25,24 @@ public class DadosTecido {
     private Fornecedor fornecedor;
 
     private BigDecimal minimoCompraQtd;
+    private String qtdAmostra;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tipo_estampa_id")
-    private Categoria tipoEstampa;
+    private TipoEstampa tipoEstampa;
 
     @Column(columnDefinition = "TEXT")
     private String infoCompraAmostra;
 
+    private String estoqueFornecedor;
+    private LocalDate dataConsulta;
+    private String reserva;
+    private LocalDate dataTermino;
+
     private BigDecimal preco;
     private BigDecimal precoNegociado;
+    private BigDecimal precoEmDolar;
+    private BigDecimal precoNegociadoEmDolar;
     private BigDecimal valorDolar;
     private BigDecimal rendimento;
 
@@ -65,14 +73,28 @@ public class DadosTecido {
     public void setFornecedor(Fornecedor fornecedor) { this.fornecedor = fornecedor; }
     public BigDecimal getMinimoCompraQtd() { return minimoCompraQtd; }
     public void setMinimoCompraQtd(BigDecimal minimoCompraQtd) { this.minimoCompraQtd = minimoCompraQtd; }
-    public Categoria getTipoEstampa() { return tipoEstampa; }
-    public void setTipoEstampa(Categoria tipoEstampa) { this.tipoEstampa = tipoEstampa; }
+    public String getQtdAmostra() { return qtdAmostra; }
+    public void setQtdAmostra(String qtdAmostra) { this.qtdAmostra = qtdAmostra; }
+    public TipoEstampa getTipoEstampa() { return tipoEstampa; }
+    public void setTipoEstampa(TipoEstampa tipoEstampa) { this.tipoEstampa = tipoEstampa; }
     public String getInfoCompraAmostra() { return infoCompraAmostra; }
     public void setInfoCompraAmostra(String infoCompraAmostra) { this.infoCompraAmostra = infoCompraAmostra; }
+    public String getEstoqueFornecedor() { return estoqueFornecedor; }
+    public void setEstoqueFornecedor(String estoqueFornecedor) { this.estoqueFornecedor = estoqueFornecedor; }
+    public LocalDate getDataConsulta() { return dataConsulta; }
+    public void setDataConsulta(LocalDate dataConsulta) { this.dataConsulta = dataConsulta; }
+    public String getReserva() { return reserva; }
+    public void setReserva(String reserva) { this.reserva = reserva; }
+    public LocalDate getDataTermino() { return dataTermino; }
+    public void setDataTermino(LocalDate dataTermino) { this.dataTermino = dataTermino; }
     public BigDecimal getPreco() { return preco; }
     public void setPreco(BigDecimal preco) { this.preco = preco; }
     public BigDecimal getPrecoNegociado() { return precoNegociado; }
     public void setPrecoNegociado(BigDecimal precoNegociado) { this.precoNegociado = precoNegociado; }
+    public BigDecimal getPrecoEmDolar() { return precoEmDolar; }
+    public void setPrecoEmDolar(BigDecimal precoEmDolar) { this.precoEmDolar = precoEmDolar; }
+    public BigDecimal getPrecoNegociadoEmDolar() { return precoNegociadoEmDolar; }
+    public void setPrecoNegociadoEmDolar(BigDecimal precoNegociadoEmDolar) { this.precoNegociadoEmDolar = precoNegociadoEmDolar; }
     public BigDecimal getValorDolar() { return valorDolar; }
     public void setValorDolar(BigDecimal valorDolar) { this.valorDolar = valorDolar; }
     public BigDecimal getRendimento() { return rendimento; }

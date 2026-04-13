@@ -208,7 +208,7 @@ public class DataSeeder implements CommandLineRunner {
         Desenvolvimento d = new Desenvolvimento();
         d.setCodigo(codigo);
         d.setDescricao(descricao);
-        d.setMarca(marca);
+        if (marca != null) d.setMarcas(new java.util.ArrayList<>(java.util.List.of(marca)));
         d.setColecao(colecao);
         d.setCategoria(categoria);
         d.setStatus(status);

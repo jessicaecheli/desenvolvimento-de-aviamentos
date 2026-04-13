@@ -10,7 +10,8 @@
     </div>
 
     <!-- Filtros -->
-    <form method="get" action="/desenvolvimentos" class="card p-3 mb-4 shadow-sm">
+    <form method="get" action="/desenvolvimentos" class="card p-3 mb-4 shadow-sm"
+          style="position:sticky; top:0; z-index:50; background:#fff;">
         <div class="row g-2">
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Código</label>
@@ -27,7 +28,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Marca</label>
-                <select name="marcaId" class="form-select">
+                <select name="marcaIds" class="form-select">
                     <option value="">Todas</option>
                     <option th:each="m : ${marcas}" th:value="${m.id}" th:text="${m.nome}"
                             th:selected="${filtroMarcaId != null and filtroMarcaId == m.id}"></option>
@@ -54,7 +55,7 @@
                 <label class="form-label fw-semibold">Status</label>
                 <select name="status" class="form-select">
                     <option value="">Todos</option>
-                    <option th:each="s : ${statusValues}" th:value="${s}" th:text="${s}"
+                    <option th:each="s : ${statusValues}" th:value="${s}" th:text="${s.label}"
                             th:selected="${filtroStatus != null and filtroStatus == s}"></option>
                 </select>
             </div>
@@ -91,11 +92,13 @@
                            class="fw-semibold text-decoration-none"></a>
                     </td>
                     <td th:text="${d.descricao}"></td>
-                    <td th:text="${d.marca?.nome}"></td>
+                    <td>
+                        <span th:each="m,s : ${d.marcas}" th:text="${m.nome + (s.last ? '' : ', ')}"></span>
+                    </td>
                     <td th:text="${d.colecao?.nomeCompleto}"></td>
                     <td th:text="${d.categoria?.nome}"></td>
                     <td>
-                        <span th:class="'badge badge-' + ${d.status}" th:text="${d.status}"></span>
+                        <span th:class="'badge badge-' + ${d.status}" th:text="${d.status.label}"></span>
                     </td>
                     <td th:text="${fornecedoresPorDev[d.id]}"></td>
                     <td th:text="${#temporals.format(d.dataCriacao,'dd/MM/yyyy')}"></td>

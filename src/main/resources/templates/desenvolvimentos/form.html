@@ -19,12 +19,15 @@
                        th:value="${desenvolvimento.descricao}"/>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Marca</label>
-                <select name="marcaId" class="form-select">
-                    <option value="">-- selecione --</option>
-                    <option th:each="m : ${marcas}" th:value="${m.id}" th:text="${m.nome}"
-                            th:selected="${desenvolvimento.marca != null and desenvolvimento.marca.id == m.id}"></option>
-                </select>
+                <label class="form-label fw-semibold">Marca(s)</label>
+                <div class="border rounded p-2" style="max-height:140px;overflow-y:auto">
+                    <div th:each="m : ${marcas}" class="form-check">
+                        <input class="form-check-input" type="checkbox" name="marcaIds"
+                               th:value="${m.id}" th:id="'marca_' + ${m.id}"
+                               th:checked="${desenvolvimento.marcas != null and desenvolvimento.marcas.contains(m)}"/>
+                        <label class="form-check-label" th:for="'marca_' + ${m.id}" th:text="${m.nome}"></label>
+                    </div>
+                </div>
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Coleção</label>
@@ -39,6 +42,7 @@
                 <select id="selectMaster" class="form-select mb-2">
                     <option value="">-- selecione a categoria --</option>
                     <option th:each="m : ${categoriasMaster}" th:value="${m.id}" th:text="${m.nome}"
+                            th:attr="data-nome=${m.nome}"
                             th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.categoriaPai != null and desenvolvimento.categoria.categoriaPai.id == m.id}"></option>
                 </select>
                 <div id="wrapSubcategoria" style="display:none" class="mt-2">
@@ -54,10 +58,11 @@
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
-                <select name="status" class="form-select">
+                <select name="status" id="selectStatus" class="form-select">
                     <option th:each="s : ${statusValues}"
                             th:if="${s.name() != 'NOVO'}"
-                            th:value="${s}" th:text="${s}"
+                            th:value="${s}" th:text="${s.label}"
+                            th:attr="data-tipo=${s.name()}"
                             th:selected="${desenvolvimento.status == s}"></option>
                 </select>
             </div>
@@ -115,9 +120,34 @@
         });
     }
 
+    const statusSelect = document.getElementById('selectStatus');
+
+    const isNovo = !document.querySelector('input[name="id"]').value;
+
+    function ajustarStatusParaTecido() {
+        const selectedOpt = master.options[master.selectedIndex];
+        const isTecido = selectedOpt && selectedOpt.dataset.nome &&
+                         selectedOpt.dataset.nome.toUpperCase() === 'TECIDOS';
+        Array.from(statusSelect.options).forEach(function(opt) {
+            if (isTecido && isNovo) {
+                // Novo tecido: só AG. AMOSTRA
+                opt.hidden = opt.dataset.tipo !== 'AMOSTRA';
+                if (opt.dataset.tipo === 'AMOSTRA') statusSelect.value = 'AMOSTRA';
+            } else if (isTecido && !isNovo) {
+                // Edição de tecido: esconde só ORÇAMENTO
+                opt.hidden = opt.dataset.tipo === 'ORCAMENTO';
+                if (statusSelect.value === 'ORCAMENTO') statusSelect.value = 'AMOSTRA';
+            } else {
+                // Aviamento: mostra tudo
+                opt.hidden = false;
+            }
+        });
+    }
+
     master.addEventListener('change', function() {
         sub.value = '';
         filtrar();
+        ajustarStatusParaTecido();
     });
 
     sub.addEventListener('change', function() {
@@ -126,6 +156,7 @@
     });
 
     filtrar();
+    ajustarStatusParaTecido();
 })();
 </script>
 </main>

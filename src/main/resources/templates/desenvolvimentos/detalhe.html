@@ -19,14 +19,14 @@
         <div>
             <h2>
                 <span th:text="${dev.codigo}"></span>
-                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status}"></span>
+                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status.label}"></span>
                 <span th:if="${atrasado}" class="badge bg-danger ms-1">
                     <i class="bi bi-clock-history"></i> Atrasado <span th:text="${diasAtraso}"></span>d
                 </span>
             </h2>
             <p class="text-muted mb-0" th:text="${dev.descricao}"></p>
             <small class="text-muted">
-                <span th:if="${dev.marca}">Marca: <strong th:text="${dev.marca.nome}"></strong> &nbsp;</span>
+                <span th:if="${not #lists.isEmpty(dev.marcas)}">Marca(s): <strong th:each="m,s : ${dev.marcas}" th:text="${m.nome + (s.last ? '' : ', ')}"></strong> &nbsp;</span>
                 <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
                 <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
                     (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
@@ -41,7 +41,7 @@
             <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="/desenvolvimentos" class="btn btn-outline-dark btn-sm">
+            <a href="/desenvolvimentos" onclick="if(document.referrer.includes('/desenvolvimentos')){history.back();return false;}" class="btn btn-outline-dark btn-sm">
                 <i class="bi bi-arrow-left"></i> Voltar
             </a>
         </div>
@@ -57,7 +57,7 @@
                     <div class="timeline">
                         <div th:each="e : ${etapas}" class="d-flex gap-3 mb-3">
                             <div class="text-center" style="min-width:40px">
-                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo}"></span>
+                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo.label}"></span>
                                 <div class="text-muted small" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM')}"></div>
                             </div>
                             <div>
@@ -113,7 +113,7 @@
                                 <option value="">-- selecione a etapa --</option>
                                 <option th:each="t : ${tiposEtapa}"
                                         th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO'}"
-                                        th:value="${t}" th:text="${t}"></option>
+                                        th:value="${t}" th:text="${t.label}"></option>
                             </select>
                         </div>
                         <!-- Campo de fornecedor — aparece só para AMOSTRA, LIBERADA, APROVADO -->

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}">
+<head><title>Reservas em Aberto</title></head>
+<body>
+<main th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0"><i class="bi bi-bookmark-check"></i> Reservas em Aberto</h2>
+        <div class="d-flex gap-2">
+            <span th:if="${expiradas > 0}" class="badge bg-danger fs-6">
+                <i class="bi bi-exclamation-triangle"></i> <span th:text="${expiradas}"></span> expirada(s)
+            </span>
+            <span th:if="${venceHoje > 0}" class="badge bg-warning text-dark fs-6">
+                <i class="bi bi-clock"></i> <span th:text="${venceHoje}"></span> vence hoje
+            </span>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(reservas)}" class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Nenhuma reserva em aberto.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(reservas)}" class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Status</th>
+                        <th>Código</th>
+                        <th>Fornecedor</th>
+                        <th class="text-end">Estoque (Importadora)</th>
+                        <th class="text-end">Reserva</th>
+                        <th class="text-center">Dt. Consulta</th>
+                        <th class="text-center">Dt. Expiração</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="r : ${reservas}"
+                        th:with="
+                            expirada=${r.dataTermino != null and r.dataTermino.isBefore(hoje)},
+                            venceHoje=${r.dataTermino != null and r.dataTermino.isEqual(hoje)},
+                            ativa=${r.dataTermino == null or r.dataTermino.isAfter(hoje)}
+                        "
+                        th:classappend="${expirada} ? 'table-danger' : (${venceHoje} ? 'table-warning' : '')">
+                        <td>
+                            <span th:if="${expirada}" class="badge bg-danger">
+                                <i class="bi bi-x-circle"></i> Expirada
+                            </span>
+                            <span th:if="${venceHoje}" class="badge bg-warning text-dark">
+                                <i class="bi bi-clock"></i> Vence Hoje
+                            </span>
+                            <span th:if="${r.dataTermino == null}" class="badge bg-secondary">
+                                <i class="bi bi-dash"></i> Sem Data
+                            </span>
+                            <span th:if="${ativa and r.dataTermino != null}" class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Ativa
+                            </span>
+                        </td>
+                        <td>
+                            <a th:href="@{/desenvolvimentos/{id}(id=${r.desenvolvimento.id})}"
+                               th:text="${r.desenvolvimento.codigo}"
+                               class="fw-semibold text-decoration-none"></a>
+                        </td>
+                        <td th:text="${r.fornecedor != null ? r.fornecedor.nome : '-'}"></td>
+                        <td class="text-end" th:text="${r.estoqueFornecedor != null ? r.estoqueFornecedor : '-'}"></td>
+                        <td class="text-end fw-bold" th:text="${r.reserva}"></td>
+                        <td class="text-center"
+                            th:text="${r.dataConsulta != null ? #temporals.format(r.dataConsulta, 'dd/MM/yyyy') : '-'}"></td>
+                        <td class="text-center">
+                            <span th:if="${r.dataTermino != null}"
+                                  th:text="${#temporals.format(r.dataTermino, 'dd/MM/yyyy')}"
+                                  th:classappend="${expirada} ? 'fw-bold text-danger' : (${venceHoje} ? 'fw-bold' : '')">
+                            </span>
+                            <span th:if="${r.dataTermino == null}" class="text-muted">-</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

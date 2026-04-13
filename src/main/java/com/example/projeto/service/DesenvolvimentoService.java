@@ -48,11 +48,22 @@ public class DesenvolvimentoService {
     @Transactional
     public Desenvolvimento criarNovo(Desenvolvimento desenvolvimento) {
         Desenvolvimento salvo = desenvolvimentoRepository.save(desenvolvimento);
-        EtapaDesenvolvimento etapaInclusao = new EtapaDesenvolvimento();
-        etapaInclusao.setDesenvolvimento(salvo);
-        etapaInclusao.setTipo(TipoEtapa.ORCAMENTO);
-        etapaInclusao.setDataOcorrencia(LocalDate.now());
-        etapaRepository.save(etapaInclusao);
+        Desenvolvimento comCategoria = desenvolvimentoRepository
+            .findByIdFetchingCategoria(salvo.getId()).orElse(salvo);
+
+        EtapaDesenvolvimento etapaInicial = new EtapaDesenvolvimento();
+        etapaInicial.setDesenvolvimento(salvo);
+        etapaInicial.setDataOcorrencia(LocalDate.now());
+
+        if (isTecido(comCategoria)) {
+            etapaInicial.setTipo(TipoEtapa.AMOSTRA);
+            salvo.setStatus(StatusDesenvolvimento.AMOSTRA);
+            desenvolvimentoRepository.save(salvo);
+        } else {
+            etapaInicial.setTipo(TipoEtapa.ORCAMENTO);
+        }
+
+        etapaRepository.save(etapaInicial);
         return salvo;
     }
 
@@ -62,7 +73,10 @@ public class DesenvolvimentoService {
     }
 
     @Transactional
-    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia, Orcamento orcamento, java.math.BigDecimal custoAmostra) {
+    public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia,
+                              Orcamento orcamento, java.math.BigDecimal custoAmostra,
+                              String nf, java.math.BigDecimal valorFrete,
+                              java.math.BigDecimal valorAmostra, String observacoesFaturamento) {
         Desenvolvimento dev = buscarPorId(id);
 
         EtapaDesenvolvimento etapa = new EtapaDesenvolvimento();
@@ -74,12 +88,22 @@ public class DesenvolvimentoService {
         if (tipo == TipoEtapa.AMOSTRA && custoAmostra != null) {
             etapa.setCustoAmostra(custoAmostra);
         }
+        etapa.setNf(nf);
+        etapa.setValorFrete(valorFrete);
+        etapa.setValorAmostra(valorAmostra);
+        etapa.setObservacoesFaturamento(observacoesFaturamento);
 
         if (tipo == TipoEtapa.ALTERACAO) {
             long rodadas = dev.getEtapas().stream()
                 .filter(e -> e.getTipo() == TipoEtapa.ALTERACAO)
                 .count();
             etapa.setNumeroRodada((int) rodadas + 1);
+        }
+        if (tipo == TipoEtapa.REPETICAO) {
+            long repeticoes = dev.getEtapas().stream()
+                .filter(e -> e.getTipo() == TipoEtapa.REPETICAO)
+                .count();
+            etapa.setNumeroRodada((int) repeticoes + 1);
         }
 
         etapaRepository.save(etapa);
@@ -194,6 +218,7 @@ public class DesenvolvimentoService {
             case CANCELADO -> StatusDesenvolvimento.CANCELADO;
             case LIBERADA -> StatusDesenvolvimento.LIBERADA;
             case NEGOCIACAO -> throw new IllegalArgumentException("Tipo NEGOCIACAO não avança status");
+            case REPETICAO -> StatusDesenvolvimento.AMOSTRA;
         };
     }
 }

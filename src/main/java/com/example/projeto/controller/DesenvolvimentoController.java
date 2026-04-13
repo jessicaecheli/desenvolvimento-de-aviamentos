@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ public class DesenvolvimentoController {
     private final ColecaoService colecaoService;
     private final CategoriaService categoriaService;
     private final FornecedorService fornecedorService;
+    private final TipoEstampaService tipoEstampaService;
     private final EtapaDesenvolvimentoRepository etapaRepository;
     private final OrcamentoRepository orcamentoRepository;
     private final DadosTecidoRepository dadosTecidoRepository;
@@ -40,6 +42,7 @@ public class DesenvolvimentoController {
                                       ColecaoService colecaoService,
                                       CategoriaService categoriaService,
                                       FornecedorService fornecedorService,
+                                      TipoEstampaService tipoEstampaService,
                                       EtapaDesenvolvimentoRepository etapaRepository,
                                       OrcamentoRepository orcamentoRepository,
                                       DadosTecidoRepository dadosTecidoRepository,
@@ -49,6 +52,7 @@ public class DesenvolvimentoController {
         this.colecaoService = colecaoService;
         this.categoriaService = categoriaService;
         this.fornecedorService = fornecedorService;
+        this.tipoEstampaService = tipoEstampaService;
         this.etapaRepository = etapaRepository;
         this.orcamentoRepository = orcamentoRepository;
         this.dadosTecidoRepository = dadosTecidoRepository;
@@ -57,14 +61,14 @@ public class DesenvolvimentoController {
 
     @GetMapping
     public String lista(@RequestParam(required = false) Long colecaoId,
-                        @RequestParam(required = false) Long marcaId,
+                        @RequestParam(required = false) Long marcaIds,
                         @RequestParam(required = false) Long categoriaMasterId,
                         @RequestParam(required = false) Long categoriaId,
                         @RequestParam(required = false) StatusDesenvolvimento status,
                         @RequestParam(required = false) String codigo,
                         @RequestParam(required = false) String fornecedor,
                         Model model) {
-        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaId, categoriaMasterId, categoriaId, status, codigo, fornecedor);
+        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaIds, categoriaMasterId, categoriaId, status, codigo, fornecedor);
 
         Set<StatusDesenvolvimento> statusComFornecedor = Set.of(
             StatusDesenvolvimento.AMOSTRA, StatusDesenvolvimento.LIBERADA, StatusDesenvolvimento.APROVADO);
@@ -83,6 +87,14 @@ public class DesenvolvimentoController {
                 }
             }
         }
+        // Tecidos armazenam fornecedor direto em DadosTecido (sem orçamento/etapa)
+        List<Long> todosIds = lista.stream().map(Desenvolvimento::getId).toList();
+        dadosTecidoRepository.findByDesenvolvimentoIdIn(todosIds).forEach(dt -> {
+            if (!fornecedoresPorDev.containsKey(dt.getDesenvolvimento().getId())
+                    && dt.getFornecedor() != null) {
+                fornecedoresPorDev.put(dt.getDesenvolvimento().getId(), dt.getFornecedor().getNome());
+            }
+        });
 
         Map<Long, LocalDate> previsaoAmostraPorDev = new HashMap<>();
         for (Desenvolvimento d : lista) {
@@ -99,7 +111,7 @@ public class DesenvolvimentoController {
         model.addAttribute("categorias", categoriaService.listarSubcategorias());
         model.addAttribute("statusValues", StatusDesenvolvimento.values());
         model.addAttribute("filtroColecaoId", colecaoId);
-        model.addAttribute("filtroMarcaId", marcaId);
+        model.addAttribute("filtroMarcaId", marcaIds);
         model.addAttribute("filtroCategoriaMasterId", categoriaMasterId);
         model.addAttribute("filtroCategoriaId", categoriaId);
         model.addAttribute("filtroStatus", status);
@@ -144,7 +156,7 @@ public class DesenvolvimentoController {
     @PostMapping("/salvar")
     public String salvar(@RequestParam String codigo,
                          @RequestParam(required = false) String descricao,
-                         @RequestParam(required = false) Long marcaId,
+                         @RequestParam(required = false) List<Long> marcaIds,
                          @RequestParam(required = false) Long colecaoId,
                          @RequestParam(required = false) Long categoriaId,
                          @RequestParam(required = false) StatusDesenvolvimento status,
@@ -162,7 +174,9 @@ public class DesenvolvimentoController {
         }
         dev.setCodigo(codigo);
         dev.setDescricao(descricao);
-        if (marcaId != null) dev.setMarca(marcaService.buscarPorId(marcaId));
+        List<Marca> marcasList = new ArrayList<>();
+        if (marcaIds != null) marcaIds.forEach(mid -> marcasList.add(marcaService.buscarPorId(mid)));
+        dev.setMarcas(marcasList);
         if (colecaoId != null) dev.setColecao(colecaoService.buscarPorId(colecaoId));
         if (categoriaId != null) dev.setCategoria(categoriaService.buscarPorId(categoriaId));
         if (status != null) dev.setStatus(status);
@@ -195,14 +209,7 @@ public class DesenvolvimentoController {
                     .orElse(new DadosTecido());
             model.addAttribute("dadosTecido", dadosTecido);
             model.addAttribute("fornecedores", fornecedorService.listarTodos());
-            categoriaService.listarMasters().stream()
-                .filter(m -> "TECIDOS".equalsIgnoreCase(m.getNome()))
-                .findFirst()
-                .ifPresent(master -> model.addAttribute("subcategoriasTecidos",
-                    categoriaService.listarSubcategoriasPorMaster(master.getId())));
-            if (!model.containsAttribute("subcategoriasTecidos")) {
-                model.addAttribute("subcategoriasTecidos", List.of());
-            }
+            model.addAttribute("tiposEstampa", tipoEstampaService.listarTodos());
             return "desenvolvimentos/detalhe-tecido";
         }
 
@@ -229,10 +236,17 @@ public class DesenvolvimentoController {
                                      @RequestParam(required = false) String unidadeMedida,
                                      @RequestParam(required = false) Long fornecedorId,
                                      @RequestParam(required = false) BigDecimal minimoCompraQtd,
+                                     @RequestParam(required = false) String qtdAmostra,
                                      @RequestParam(required = false) Long tipoEstampaId,
                                      @RequestParam(required = false) String infoCompraAmostra,
+                                     @RequestParam(required = false) String estoqueFornecedor,
+                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataConsulta,
+                                     @RequestParam(required = false) String reserva,
+                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataTermino,
                                      @RequestParam(required = false) BigDecimal preco,
                                      @RequestParam(required = false) BigDecimal precoNegociado,
+                                     @RequestParam(required = false) BigDecimal precoEmDolar,
+                                     @RequestParam(required = false) BigDecimal precoNegociadoEmDolar,
                                      @RequestParam(required = false) BigDecimal valorDolar,
                                      @RequestParam(required = false) BigDecimal rendimento,
                                      @RequestParam(required = false) String origem,
@@ -245,10 +259,17 @@ public class DesenvolvimentoController {
         dados.setUnidadeMedida(unidadeMedida);
         dados.setFornecedor(fornecedorId != null ? fornecedorService.buscarPorId(fornecedorId) : null);
         dados.setMinimoCompraQtd(minimoCompraQtd);
-        dados.setTipoEstampa(tipoEstampaId != null ? categoriaService.buscarPorId(tipoEstampaId) : null);
+        dados.setQtdAmostra(qtdAmostra);
+        dados.setTipoEstampa(tipoEstampaId != null ? tipoEstampaService.buscarPorId(tipoEstampaId) : null);
         dados.setInfoCompraAmostra(infoCompraAmostra);
+        dados.setEstoqueFornecedor(estoqueFornecedor);
+        dados.setDataConsulta(dataConsulta);
+        dados.setReserva(reserva);
+        dados.setDataTermino(dataTermino);
         dados.setPreco(preco);
         dados.setPrecoNegociado(precoNegociado);
+        dados.setPrecoEmDolar(precoEmDolar);
+        dados.setPrecoNegociadoEmDolar(precoNegociadoEmDolar);
         dados.setValorDolar(valorDolar);
         dados.setRendimento(rendimento);
         dadosTecidoRepository.save(dados);
@@ -299,12 +320,17 @@ public class DesenvolvimentoController {
                                 @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataOcorrencia,
                                 @RequestParam(required = false) Long orcamentoId,
                                 @RequestParam(required = false) BigDecimal custoAmostra,
+                                @RequestParam(required = false) String nf,
+                                @RequestParam(required = false) BigDecimal valorFrete,
+                                @RequestParam(required = false) BigDecimal valorAmostra,
+                                @RequestParam(required = false) String observacoesFaturamento,
                                 RedirectAttributes ra) {
         if (tipo == null) {
             return "redirect:/desenvolvimentos/" + id;
         }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
-        service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra);
+        service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra,
+                nf, valorFrete, valorAmostra, observacoesFaturamento);
         ra.addFlashAttribute("sucesso", "Etapa registrada com sucesso.");
         return "redirect:/desenvolvimentos/" + id;
     }
@@ -447,6 +473,29 @@ public class DesenvolvimentoController {
 
         ra.addFlashAttribute("sucesso", "Negociação salva.");
         return "redirect:/desenvolvimentos/" + id;
+    }
+
+    @PostMapping("/{devId}/etapa/{etapaId}/editar")
+    public String editarEtapa(@PathVariable Long devId,
+                               @PathVariable Long etapaId,
+                               @RequestParam(required = false) String nf,
+                               @RequestParam(required = false) BigDecimal valorFrete,
+                               @RequestParam(required = false) BigDecimal valorAmostra,
+                               @RequestParam(required = false) String observacoesFaturamento,
+                               @RequestParam(required = false) String observacao,
+                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataOcorrencia,
+                               RedirectAttributes ra) {
+        EtapaDesenvolvimento etapa = etapaRepository.findById(etapaId)
+            .orElseThrow(() -> new IllegalArgumentException("Etapa não encontrada: " + etapaId));
+        etapa.setNf(nf);
+        etapa.setValorFrete(valorFrete);
+        etapa.setValorAmostra(valorAmostra);
+        etapa.setObservacoesFaturamento(observacoesFaturamento);
+        etapa.setObservacao(observacao);
+        if (dataOcorrencia != null) etapa.setDataOcorrencia(dataOcorrencia);
+        etapaRepository.save(etapa);
+        ra.addFlashAttribute("sucesso", "Etapa atualizada.");
+        return "redirect:/desenvolvimentos/" + devId;
     }
 
     @PostMapping("/{id}/excluir")

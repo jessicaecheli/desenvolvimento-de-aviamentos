@@ -68,6 +68,8 @@ public class DashboardService {
         List<Long> ids = todos.stream().map(Desenvolvimento::getId).collect(Collectors.toList());
         dto.setTotalComAlteracao(ids.isEmpty() ? 0L
             : etapaRepository.countDistinctByTipoAndDesenvolvimentoIds(TipoEtapa.ALTERACAO, ids));
+        dto.setTotalComRepeticao(ids.isEmpty() ? 0L
+            : etapaRepository.countDistinctByTipoAndDesenvolvimentoIds(TipoEtapa.REPETICAO, ids));
 
         // Atrasados e com entrega na semana
         List<DashboardDTO.AtrasadoDTO> atrasados = todos.stream()
@@ -235,9 +237,10 @@ public class DashboardService {
 
         // Quantidade por marca (inclui todos os status)
         Map<String, Long> porMarca = todos.stream()
-            .filter(d -> d.getMarca() != null)
+            .filter(d -> !d.getMarcas().isEmpty())
+            .flatMap(d -> d.getMarcas().stream())
             .collect(Collectors.groupingBy(
-                d -> d.getMarca().getNome(),
+                m -> m.getNome(),
                 Collectors.counting()
             ))
             .entrySet().stream()

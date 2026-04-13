@@ -12,16 +12,15 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
 
     List<Desenvolvimento> findByColecaoId(Long colecaoId);
 
-    List<Desenvolvimento> findByMarcaId(Long marcaId);
-
     List<Desenvolvimento> findByCategoriaId(Long categoriaId);
 
     List<Desenvolvimento> findByStatus(StatusDesenvolvimento status);
 
     @Query("SELECT DISTINCT d FROM Desenvolvimento d " +
-           "LEFT JOIN d.etapas e LEFT JOIN e.orcamento o WHERE " +
+           "LEFT JOIN d.etapas e LEFT JOIN e.orcamento o " +
+           "LEFT JOIN d.marcas dm WHERE " +
            "(:colecaoId IS NULL OR d.colecao.id = :colecaoId) AND " +
-           "(:marcaId IS NULL OR d.marca.id = :marcaId) AND " +
+           "(:marcaId IS NULL OR dm.id = :marcaId) AND " +
            "(:categoriaMasterId IS NULL OR (d.categoria IS NOT NULL AND d.categoria.categoriaPai.id = :categoriaMasterId)) AND " +
            "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
            "(:status IS NULL OR d.status = :status) AND " +

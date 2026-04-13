@@ -74,7 +74,7 @@
                 <div style="width:50%; padding:4px 7px; border-right:1px solid #000;">
                     <span class="label">Marca: </span>
                     <input class="campo" type="text" style="width:78%"
-                           th:value="${dev.marca != null ? dev.marca.nome : ''}"/>
+                           th:value="${not #lists.isEmpty(dev.marcas) ? #strings.listJoin(dev.marcas.![nome], ', ') : ''}"/>
                 </div>
                 <div style="width:50%; padding:4px 7px;">
                     <span class="label">QTD Ref/Consumo: </span>
@@ -158,7 +158,7 @@
 
     <!-- Seção AMOSTRA -->
     <tr>
-        <td colspan="3" class="secao">A M O S T R A</td>
+        <td colspan="3" class="secao">A G .  A M O S T R A</td>
     </tr>
     <tr>
         <td colspan="3" class="caixa-amostra"></td>

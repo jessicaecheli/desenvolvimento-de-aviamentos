@@ -22,9 +22,13 @@ public class Desenvolvimento {
     private String codigoSystextil2;
     private String codigoSystextil3;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "marca_id")
-    private Marca marca;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "desenvolvimento_marca",
+        joinColumns = @JoinColumn(name = "desenvolvimento_id"),
+        inverseJoinColumns = @JoinColumn(name = "marca_id")
+    )
+    private List<Marca> marcas = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "colecao_id")
@@ -74,8 +78,8 @@ public class Desenvolvimento {
     public void setCodigoSystextil2(String codigoSystextil2) { this.codigoSystextil2 = codigoSystextil2; }
     public String getCodigoSystextil3() { return codigoSystextil3; }
     public void setCodigoSystextil3(String codigoSystextil3) { this.codigoSystextil3 = codigoSystextil3; }
-    public Marca getMarca() { return marca; }
-    public void setMarca(Marca marca) { this.marca = marca; }
+    public List<Marca> getMarcas() { return marcas; }
+    public void setMarcas(List<Marca> marcas) { this.marcas = marcas; }
     public Colecao getColecao() { return colecao; }
     public void setColecao(Colecao colecao) { this.colecao = colecao; }
     public Categoria getCategoria() { return categoria; }

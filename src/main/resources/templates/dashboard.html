@@ -55,6 +55,14 @@
             </div>
         </div>
         <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 text-white h-100" style="background-color:#0d6efd">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold" th:text="${dashboard.totalComRepeticao}">0</div>
+                    <div>Contador de Repetições</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
             <div class="card shadow-sm border-0 bg-danger text-white h-100">
                 <div class="card-body">
                     <div class="fs-2 fw-bold" th:text="${dashboard.totalHistoricoAtrasados}">0</div>
@@ -67,7 +75,8 @@
                 <div class="card-body">
                     <div class="fs-2 fw-bold"
                          th:text="${'R$ ' + #numbers.formatDecimal(dashboard.totalCustoAmostras, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
-                    <div>Custo com Amostras</div>
+                    <div>Custo Amostras</div>
+                    <div class="small opacity-75">(valor cobrado + frete)</div>
                 </div>
             </div>
         </div>
@@ -119,7 +128,7 @@
                         <tbody>
                             <tr th:each="entry : ${dashboard.totalPorStatus}">
                                 <td>
-                                    <span th:class="'badge badge-' + ${entry.key}" th:text="${entry.key}"></span>
+                                    <span th:class="'badge badge-' + ${entry.key}" th:text="${entry.key.label}"></span>
                                 </td>
                                 <td class="text-end fw-bold" th:text="${entry.value}"></td>
                             </tr>
@@ -264,6 +273,30 @@
             </tbody>
         </table>
     </div>
+    <!-- Alertas de Reservas -->
+    <div th:if="${totalReservas > 0}" class="card shadow-sm mt-4"
+         th:classappend="${reservasExpiradas > 0} ? 'border-danger' : (${reservasVenceHoje > 0} ? 'border-warning' : '')">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center"
+             th:classappend="${reservasExpiradas > 0} ? 'text-danger' : (${reservasVenceHoje > 0} ? 'text-warning' : '')">
+            <span><i class="bi bi-bookmark-check"></i> Reservas de Tecidos</span>
+            <div class="d-flex gap-2">
+                <span th:if="${reservasExpiradas > 0}" class="badge bg-danger">
+                    <i class="bi bi-exclamation-triangle"></i> <span th:text="${reservasExpiradas}"></span> expirada(s)
+                </span>
+                <span th:if="${reservasVenceHoje > 0}" class="badge bg-warning text-dark">
+                    <i class="bi bi-clock"></i> <span th:text="${reservasVenceHoje}"></span> vence hoje
+                </span>
+                <a href="/reservas" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+            </div>
+        </div>
+        <div class="card-body py-2 px-3">
+            <span class="text-muted small">
+                <span th:text="${totalReservas}"></span> reserva(s) em aberto —
+                <a href="/reservas" class="text-decoration-none">ver listagem completa</a>
+            </span>
+        </div>
+    </div>
+
     <script>
     function filtrarAprovSubcat(sel) {
         var val = sel.value;

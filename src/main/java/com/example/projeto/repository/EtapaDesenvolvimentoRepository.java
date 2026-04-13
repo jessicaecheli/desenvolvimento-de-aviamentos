@@ -27,6 +27,8 @@ public interface EtapaDesenvolvimentoRepository extends JpaRepository<EtapaDesen
         @Param("ids") List<Long> ids,
         @Param("tipos") List<TipoEtapa> tipos);
 
-    @Query("SELECT COALESCE(SUM(e.custoAmostra), 0) FROM EtapaDesenvolvimento e WHERE e.desenvolvimento.id IN :ids AND e.custoAmostra IS NOT NULL")
+    @Query("SELECT COALESCE(SUM(COALESCE(e.custoAmostra, 0) + COALESCE(e.valorFrete, 0) + COALESCE(e.valorAmostra, 0)), 0) " +
+           "FROM EtapaDesenvolvimento e WHERE e.desenvolvimento.id IN :ids " +
+           "AND (e.custoAmostra IS NOT NULL OR e.valorFrete IS NOT NULL OR e.valorAmostra IS NOT NULL)")
     BigDecimal sumCustoAmostraByDesenvolvimentoIds(@Param("ids") Collection<Long> ids);
 }

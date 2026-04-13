@@ -9,7 +9,7 @@
         <div>
             <h2>
                 <span th:text="${dev.codigo}"></span>
-                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status}"></span>
+                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status.label}"></span>
                 <span th:if="${atrasado}" class="badge bg-danger ms-1">
                     <i class="bi bi-clock-history"></i> Atrasado <span th:text="${diasAtraso}"></span>d
                 </span>
@@ -17,7 +17,7 @@
             </h2>
             <p class="text-muted mb-0" th:text="${dev.descricao}"></p>
             <small class="text-muted">
-                <span th:if="${dev.marca}">Marca: <strong th:text="${dev.marca.nome}"></strong> &nbsp;</span>
+                <span th:if="${not #lists.isEmpty(dev.marcas)}">Marca(s): <strong th:each="m,s : ${dev.marcas}" th:text="${m.nome + (s.last ? '' : ', ')}"></strong> &nbsp;</span>
                 <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
                 <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
                     (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
@@ -32,7 +32,7 @@
             <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="/desenvolvimentos" class="btn btn-outline-dark btn-sm">
+            <a href="/desenvolvimentos" onclick="if(document.referrer.includes('/desenvolvimentos')){history.back();return false;}" class="btn btn-outline-dark btn-sm">
                 <i class="bi bi-arrow-left"></i> Voltar
             </a>
         </div>
@@ -48,17 +48,41 @@
                     <div class="timeline">
                         <div th:each="e : ${etapas}" class="d-flex gap-3 mb-3">
                             <div class="text-center" style="min-width:40px">
-                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo}"></span>
+                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo.label}"></span>
                                 <div class="text-muted small" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM')}"></div>
                             </div>
-                            <div>
-                                <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
-                                <div th:if="${e.custoAmostra != null}" class="small text-warning fw-semibold">
-                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
+                            <div class="flex-grow-1">
+                                <div th:if="${e.nf}" class="small fw-semibold">NF: <span th:text="${e.nf}"></span></div>
+                                <div th:if="${e.valorAmostra != null}" class="small">
+                                    Vl. Amostra: R$ <span th:text="${#numbers.formatDecimal(e.valorAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
                                 </div>
-                                <div th:if="${e.numeroRodada > 1}" class="small text-muted">
+                                <div th:if="${e.valorFrete != null}" class="small">
+                                    Frete: R$ <span th:text="${#numbers.formatDecimal(e.valorFrete, 1, 'POINT', 2, 'COMMA')}"></span>
+                                </div>
+                                <div th:if="${e.observacoesFaturamento}" class="small text-muted" th:text="${e.observacoesFaturamento}"></div>
+                                <div th:if="${e.observacao}" class="small text-muted" th:text="${e.observacao}"></div>
+                                <div th:if="${e.tipo.name() == 'ALTERACAO' and e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
                                 </div>
+                                <div th:if="${e.tipo.name() == 'REPETICAO'}" class="small text-muted">
+                                    Repetição <span th:text="${e.numeroRodada}"></span>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1"
+                                        style="font-size:0.7rem"
+                                        onclick="abrirEditarEtapa(this)"
+                                        th:attr="
+                                            data-etapa-id=${e.id},
+                                            data-dev-id=${dev.id},
+                                            data-nf=${e.nf},
+                                            data-valor-frete=${e.valorFrete},
+                                            data-valor-amostra=${e.valorAmostra},
+                                            data-obs-fat=${e.observacoesFaturamento},
+                                            data-obs=${e.observacao},
+                                            data-data=${#temporals.format(e.dataOcorrencia,'yyyy-MM-dd')}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -77,8 +101,9 @@
                         <!-- campos ocultos para preservar dados de preço ao salvar só dados do tecido -->
                         <input type="hidden" name="preco" th:value="${dadosTecido.preco}"/>
                         <input type="hidden" name="precoNegociado" th:value="${dadosTecido.precoNegociado}"/>
+                        <input type="hidden" name="precoEmDolar" th:value="${dadosTecido.precoEmDolar}"/>
+                        <input type="hidden" name="precoNegociadoEmDolar" th:value="${dadosTecido.precoNegociadoEmDolar}"/>
                         <input type="hidden" name="valorDolar" th:value="${dadosTecido.valorDolar}"/>
-                        <input type="hidden" name="rendimento" th:value="${dadosTecido.rendimento}"/>
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Cor / Estampa</label>
@@ -87,8 +112,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Unidade de Medida</label>
-                                <input type="text" name="unidadeMedida" class="form-control uppercase-input"
-                                       th:value="${dadosTecido.unidadeMedida}" placeholder="Ex: METRO, KG, ROLO"/>
+                                <select name="unidadeMedida" class="form-select">
+                                    <option value="">(selecione)</option>
+                                    <option value="MT" th:selected="${dadosTecido.unidadeMedida == 'MT'}">MT</option>
+                                    <option value="KG" th:selected="${dadosTecido.unidadeMedida == 'KG'}">KG</option>
+                                </select>
                             </div>
                             <div class="col-md-12">
                                 <label class="form-label fw-semibold">Fornecedor</label>
@@ -101,16 +129,21 @@
                                     </option>
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label fw-semibold">Mínimo de Compra</label>
                                 <input type="number" name="minimoCompraQtd" step="0.01" class="form-control"
                                        th:value="${dadosTecido.minimoCompraQtd}" placeholder="Ex: 50"/>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Tipo de Estampa</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Qtd. Amostra</label>
+                                <input type="text" name="qtdAmostra" class="form-control uppercase-input"
+                                       th:value="${dadosTecido.qtdAmostra}" placeholder="Ex: 2MT"/>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Tipo de Tecido</label>
                                 <select name="tipoEstampaId" class="form-select">
                                     <option value="">(nenhum)</option>
-                                    <option th:each="s : ${subcategoriasTecidos}"
+                                    <option th:each="s : ${tiposEstampa}"
                                             th:value="${s.id}"
                                             th:text="${s.nome}"
                                             th:selected="${dadosTecido.tipoEstampa != null and dadosTecido.tipoEstampa.id == s.id}">
@@ -121,6 +154,28 @@
                                 <label class="form-label fw-semibold">Observações</label>
                                 <textarea name="infoCompraAmostra" class="form-control uppercase-input" rows="3"
                                           th:text="${dadosTecido.infoCompraAmostra}"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Estoque Fornecedor (Importadora)</label>
+                                <input type="text" name="estoqueFornecedor" inputmode="numeric" class="form-control"
+                                       th:value="${dadosTecido.estoqueFornecedor}" placeholder="Ex: 1.200"
+                                       oninput="formatMilhar(this)"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data da Consulta</label>
+                                <input type="date" name="dataConsulta" class="form-control"
+                                       th:value="${dadosTecido.dataConsulta}"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Reserva</label>
+                                <input type="text" name="reserva" inputmode="numeric" class="form-control"
+                                       th:value="${dadosTecido.reserva}" placeholder="Ex: 30"
+                                       oninput="formatMilhar(this)"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data Expiração</label>
+                                <input type="date" name="dataTermino" class="form-control"
+                                       th:value="${dadosTecido.dataTermino}"/>
                             </div>
                             <div class="col-12">
                                 <button class="btn btn-primary w-100">Salvar Dados do Tecido</button>
@@ -140,20 +195,29 @@
                             <select name="tipo" class="form-select">
                                 <option value="">-- selecione a etapa --</option>
                                 <option th:each="t : ${tiposEtapa}"
-                                        th:if="${t.name() != 'INCLUSAO'}"
-                                        th:value="${t}" th:text="${t}"></option>
+                                        th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO' and t.name() != 'REPETICAO'}"
+                                        th:value="${t}" th:text="${t.label}"></option>
                             </select>
                         </div>
                         <input type="hidden" name="dataOcorrencia"
                                th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
-                        <!-- Custo da amostra — aparece só para AMOSTRA -->
-                        <div class="mb-2" id="campoCustoAmostraTecido" style="display:none">
-                            <label class="form-label fw-semibold">Custo da Amostra (R$)</label>
-                            <input type="number" name="custoAmostra" step="0.01" class="form-control" placeholder="0,00"/>
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Informações de Compra de Amostra</label>
-                            <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">NF</label>
+                                <input type="text" name="nf" class="form-control uppercase-input" placeholder="Número da NF"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Valor Frete (R$)</label>
+                                <input type="number" name="valorFrete" step="0.01" class="form-control" placeholder="0,00"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Valor Amostra (R$)</label>
+                                <input type="number" name="valorAmostra" step="0.01" class="form-control" placeholder="0,00"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Observações de Faturamento</label>
+                                <input type="text" name="observacoesFaturamento" class="form-control uppercase-input"/>
+                            </div>
                         </div>
                         <button class="btn btn-primary w-100">Registrar</button>
                     </form>
@@ -172,21 +236,38 @@
                         <input type="hidden" name="fornecedorId"
                                th:value="${dadosTecido.fornecedor != null ? dadosTecido.fornecedor.id : ''}"/>
                         <input type="hidden" name="minimoCompraQtd" th:value="${dadosTecido.minimoCompraQtd}"/>
+                        <input type="hidden" name="qtdAmostra" th:value="${dadosTecido.qtdAmostra}"/>
                         <input type="hidden" name="tipoEstampaId" th:value="${dadosTecido.tipoEstampa != null ? dadosTecido.tipoEstampa.id : ''}"/>
                         <input type="hidden" name="infoCompraAmostra" th:value="${dadosTecido.infoCompraAmostra}"/>
+                        <input type="hidden" name="estoqueFornecedor" th:value="${dadosTecido.estoqueFornecedor}"/>
+                        <input type="hidden" name="dataConsulta" th:value="${dadosTecido.dataConsulta}"/>
+                        <input type="hidden" name="reserva" th:value="${dadosTecido.reserva}"/>
+                        <input type="hidden" name="dataTermino" th:value="${dadosTecido.dataTermino}"/>
 
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Preço (R$)</label>
+                                <label class="form-label fw-semibold">Preço Inicial (R$)</label>
                                 <input type="number" name="preco" step="0.01" class="form-control" id="inputPreco"
                                        th:value="${dadosTecido.preco}" placeholder="0,00"
                                        oninput="calcReducao()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preço Inicial (U$)</label>
+                                <input type="number" name="precoEmDolar" step="0.0001" class="form-control" id="inputPrecoUsd"
+                                       th:value="${dadosTecido.precoEmDolar}" placeholder="0,0000"
+                                       oninput="calcDolar()"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Preço Negociado (R$)</label>
                                 <input type="number" name="precoNegociado" step="0.01" class="form-control" id="inputPrecoNeg"
                                        th:value="${dadosTecido.precoNegociado}" placeholder="0,00"
                                        oninput="calcReducao()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Preço Negociado (U$)</label>
+                                <input type="number" name="precoNegociadoEmDolar" step="0.0001" class="form-control" id="inputPrecoNegUsd"
+                                       th:value="${dadosTecido.precoNegociadoEmDolar}" placeholder="0,0000"
+                                       oninput="calcDolar()"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">% de Redução</label>
@@ -198,21 +279,10 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Valor em Dólar (US$)</label>
-                                <input type="number" name="valorDolar" step="0.0001" class="form-control"
-                                       th:value="${dadosTecido.valorDolar}" placeholder="0,0000"/>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Rendimento (m)</label>
-                                <input type="number" name="rendimento" step="0.0001" class="form-control" id="inputRendimento"
-                                       th:value="${dadosTecido.rendimento}" placeholder="0,0000"
-                                       oninput="calcConversao()"/>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">Conversão KG→Metro (R$/m)</label>
-                                <input type="text" id="conversaoKgMetro" class="form-control" readonly
-                                       th:value="${dadosTecido.conversaoKgMetro != null ?
-                                           #numbers.formatDecimal(dadosTecido.conversaoKgMetro, 1, 'POINT', 4, 'COMMA') : ''}"/>
+                                <label class="form-label fw-semibold">Cotação Dólar (US$)</label>
+                                <input type="number" name="valorDolar" step="0.0001" class="form-control" id="inputCotacao"
+                                       th:value="${dadosTecido.valorDolar}" placeholder="0,0000"
+                                       oninput="calcDolar()"/>
                             </div>
                             <div class="col-12">
                                 <button class="btn btn-primary w-100">Salvar Preço e Negociação</button>
@@ -222,6 +292,52 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal Editar Etapa -->
+    <div class="modal fade" id="modalEditarEtapa" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Etapa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEditarEtapa" method="post">
+                    <div class="modal-body">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Data</label>
+                                <input type="date" name="dataOcorrencia" id="editData" class="form-control"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">NF</label>
+                                <input type="text" name="nf" id="editNf" class="form-control uppercase-input"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Valor Frete (R$)</label>
+                                <input type="number" name="valorFrete" id="editValorFrete" step="0.01" class="form-control"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Valor Amostra (R$)</label>
+                                <input type="number" name="valorAmostra" id="editValorAmostra" step="0.01" class="form-control"/>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Obs. Faturamento</label>
+                                <input type="text" name="observacoesFaturamento" id="editObsFat" class="form-control uppercase-input"/>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Observação</label>
+                                <input type="text" name="observacao" id="editObs" class="form-control uppercase-input"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -235,6 +351,26 @@
         tipoSelect.addEventListener('change', atualizar);
         atualizar();
     }());
+    function formatMilhar(input) {
+        const pos = input.selectionStart;
+        const raw = input.value.replace(/\D/g, '');
+        const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        input.value = formatted;
+    }
+    function calcDolar() {
+        const cotacao = parseFloat(document.getElementById('inputCotacao').value) || 0;
+        const usd = parseFloat(document.getElementById('inputPrecoUsd').value) || 0;
+        const usdNeg = parseFloat(document.getElementById('inputPrecoNegUsd').value) || 0;
+        if (cotacao > 0) {
+            if (usd > 0) {
+                document.getElementById('inputPreco').value = (usd * cotacao).toFixed(2);
+            }
+            if (usdNeg > 0) {
+                document.getElementById('inputPrecoNeg').value = (usdNeg * cotacao).toFixed(2);
+            }
+        }
+        calcReducao();
+    }
     function calcReducao() {
         const preco = parseFloat(document.getElementById('inputPreco').value) || 0;
         const precoNeg = parseFloat(document.getElementById('inputPrecoNeg').value) || 0;
@@ -245,17 +381,18 @@
         } else {
             campo.value = '';
         }
-        calcConversao();
     }
-    function calcConversao() {
-        const precoNeg = parseFloat(document.getElementById('inputPrecoNeg').value) || 0;
-        const rend = parseFloat(document.getElementById('inputRendimento').value) || 0;
-        const campo = document.getElementById('conversaoKgMetro');
-        if (precoNeg > 0 && rend > 0) {
-            campo.value = (precoNeg / rend).toFixed(4).replace('.', ',');
-        } else {
-            campo.value = '';
-        }
+    function abrirEditarEtapa(btn) {
+        var devId = btn.dataset.devId;
+        var etapaId = btn.dataset.etapaId;
+        document.getElementById('formEditarEtapa').action = '/desenvolvimentos/' + devId + '/etapa/' + etapaId + '/editar';
+        document.getElementById('editData').value = btn.dataset.data || '';
+        document.getElementById('editNf').value = btn.dataset.nf || '';
+        document.getElementById('editValorFrete').value = btn.dataset.valorFrete || '';
+        document.getElementById('editValorAmostra').value = btn.dataset.valorAmostra || '';
+        document.getElementById('editObsFat').value = btn.dataset.obsFat || '';
+        document.getElementById('editObs').value = btn.dataset.obs || '';
+        new bootstrap.Modal(document.getElementById('modalEditarEtapa')).show();
     }
     </script>
 </main>

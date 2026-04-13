@@ -35,6 +35,17 @@ public class EtapaDesenvolvimento {
     @Column(name = "custo_amostra", precision = 19, scale = 2)
     private BigDecimal custoAmostra;
 
+    private String nf;
+
+    @Column(name = "valor_frete", precision = 19, scale = 2)
+    private BigDecimal valorFrete;
+
+    @Column(name = "valor_amostra", precision = 19, scale = 2)
+    private BigDecimal valorAmostra;
+
+    @Column(name = "observacoes_faturamento", columnDefinition = "TEXT")
+    private String observacoesFaturamento;
+
     public EtapaDesenvolvimento() {}
 
     public Long getId() { return id; }
@@ -53,4 +64,12 @@ public class EtapaDesenvolvimento {
     public void setOrcamento(Orcamento orcamento) { this.orcamento = orcamento; }
     public BigDecimal getCustoAmostra() { return custoAmostra; }
     public void setCustoAmostra(BigDecimal custoAmostra) { this.custoAmostra = custoAmostra; }
+    public String getNf() { return nf; }
+    public void setNf(String nf) { this.nf = nf; }
+    public BigDecimal getValorFrete() { return valorFrete; }
+    public void setValorFrete(BigDecimal valorFrete) { this.valorFrete = valorFrete; }
+    public BigDecimal getValorAmostra() { return valorAmostra; }
+    public void setValorAmostra(BigDecimal valorAmostra) { this.valorAmostra = valorAmostra; }
+    public String getObservacoesFaturamento() { return observacoesFaturamento; }
+    public void setObservacoesFaturamento(String observacoesFaturamento) { this.observacoesFaturamento = observacoesFaturamento; }
 }
