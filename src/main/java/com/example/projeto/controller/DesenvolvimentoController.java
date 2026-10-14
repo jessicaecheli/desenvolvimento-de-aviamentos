@@ -122,23 +122,15 @@ public class DesenvolvimentoController {
 
     @GetMapping("/novo")
     public String novoForm(Model model) {
-        model.addAttribute("desenvolvimento", new Desenvolvimento());
-        model.addAttribute("marcas", marcaService.listarTodas());
-        model.addAttribute("colecoes", colecaoService.listarTodas());
-        model.addAttribute("categoriasMaster", categoriaService.listarMasters());
-        List<Categoria> subcategorias = categoriaService.listarSubcategorias();
-        model.addAttribute("subcategorias", subcategorias);
-        model.addAttribute("statusValues", StatusDesenvolvimento.values());
-        Map<Long, Integer> prazoPorSubcategoria = subcategorias.stream()
-            .filter(c -> c.getPrazoDiasUteis() != null)
-            .collect(Collectors.toMap(Categoria::getId, Categoria::getPrazoDiasUteis));
-        model.addAttribute("prazoPorSubcategoria", prazoPorSubcategoria);
-        return "desenvolvimentos/form";
+        return popularFormModel(new Desenvolvimento(), model);
     }
 
     @GetMapping("/{id}/editar")
     public String editarForm(@PathVariable Long id, Model model) {
-        Desenvolvimento dev = service.buscarPorId(id);
+        return popularFormModel(service.buscarPorId(id), model);
+    }
+
+    private String popularFormModel(Desenvolvimento dev, Model model) {
         model.addAttribute("desenvolvimento", dev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
@@ -165,14 +157,15 @@ public class DesenvolvimentoController {
                          @RequestParam(required = false) String codigoSystextil2,
                          @RequestParam(required = false) String codigoSystextil3,
                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate previsaoAmostra,
-                         RedirectAttributes ra) {
+                         RedirectAttributes ra,
+                         Model model) {
         Desenvolvimento dev;
         if (id != null) {
             dev = service.buscarPorId(id);
         } else {
             dev = new Desenvolvimento();
         }
-        dev.setCodigo(codigo);
+        dev.setCodigo(codigo == null ? null : codigo.trim());
         dev.setDescricao(descricao);
         List<Marca> marcasList = new ArrayList<>();
         if (marcaIds != null) marcaIds.forEach(mid -> marcasList.add(marcaService.buscarPorId(mid)));
@@ -184,6 +177,13 @@ public class DesenvolvimentoController {
         dev.setCodigoSystextil2(codigoSystextil2);
         dev.setCodigoSystextil3(codigoSystextil3);
         dev.setPrevisaoAmostra(previsaoAmostra);
+        List<Desenvolvimento> conflitosCodigo =
+            desenvolvimentoRepository.findByCodigoDuplicado(dev.getCodigo(), id);
+        if (!conflitosCodigo.isEmpty()) {
+            model.addAttribute("erro", "O código \"" + dev.getCodigo()
+                + "\" já está cadastrado em outro desenvolvimento. Informe um código diferente.");
+            return popularFormModel(dev, model);
+        }
         if (id == null) {
             service.criarNovo(dev);
         } else {

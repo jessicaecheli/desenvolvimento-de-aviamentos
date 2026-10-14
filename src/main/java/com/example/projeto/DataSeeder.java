@@ -2,6 +2,7 @@ package com.example.projeto;
 
 import com.example.projeto.entity.*;
 import com.example.projeto.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,11 @@ public class DataSeeder implements CommandLineRunner {
     private final DesenvolvimentoRepository devRepo;
     private final EtapaDesenvolvimentoRepository etapaRepo;
     private final OrcamentoRepository orcRepo;
+
+    /** Dados de demonstração (AV001-AV015). Desativados por padrão — o sistema inicia vazio.
+     *  Para reativar, definir app.seed-demo-data=true em application.properties. */
+    @Value("${app.seed-demo-data:false}")
+    private boolean seedDemoData;
 
     public DataSeeder(MarcaRepository marcaRepo, ColecaoRepository colecaoRepo,
                       CategoriaRepository categoriaRepo, DesenvolvimentoRepository devRepo,
@@ -37,6 +43,7 @@ public class DataSeeder implements CommandLineRunner {
         if (!categoriaRepo.existsByNomeIgnoreCase("TECIDOS"))
             categoriaRepo.save(categoriaMaster("TECIDOS"));
 
+        if (!seedDemoData) return;      // dados de demonstração desativados
         if (devRepo.count() > 0) return; // já tem dados de demo, não faz nada
 
         // --- Marcas ---

@@ -18,11 +18,14 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
 
     @Query("SELECT DISTINCT d FROM Desenvolvimento d " +
            "LEFT JOIN d.etapas e LEFT JOIN e.orcamento o " +
-           "LEFT JOIN d.marcas dm WHERE " +
-           "(:colecaoId IS NULL OR d.colecao.id = :colecaoId) AND " +
+           "LEFT JOIN d.marcas dm " +
+           "LEFT JOIN d.colecao col " +
+           "LEFT JOIN d.categoria cat " +
+           "LEFT JOIN cat.categoriaPai catPai WHERE " +
+           "(:colecaoId IS NULL OR col.id = :colecaoId) AND " +
            "(:marcaId IS NULL OR dm.id = :marcaId) AND " +
-           "(:categoriaMasterId IS NULL OR (d.categoria IS NOT NULL AND d.categoria.categoriaPai.id = :categoriaMasterId)) AND " +
-           "(:categoriaId IS NULL OR d.categoria.id = :categoriaId) AND " +
+           "(:categoriaMasterId IS NULL OR catPai.id = :categoriaMasterId) AND " +
+           "(:categoriaId IS NULL OR cat.id = :categoriaId) AND " +
            "(:status IS NULL OR d.status = :status) AND " +
            "(:codigo IS NULL OR UPPER(d.codigo) LIKE UPPER(CONCAT('%', :codigo, '%')) " +
            "    OR UPPER(d.codigoSystextil1) LIKE UPPER(CONCAT('%', :codigo, '%')) " +
@@ -52,4 +55,8 @@ public interface DesenvolvimentoRepository extends JpaRepository<Desenvolvimento
            "  UPPER(d.codigoSystextil3) = UPPER(:codigo)))" +
            ")")
     List<Desenvolvimento> findBySystextilDuplicado(@Param("codigo") String codigo, @Param("excludeId") Long excludeId);
+
+    @Query("SELECT d FROM Desenvolvimento d WHERE UPPER(d.codigo) = UPPER(:codigo) AND " +
+           "(:excludeId IS NULL OR d.id <> :excludeId)")
+    List<Desenvolvimento> findByCodigoDuplicado(@Param("codigo") String codigo, @Param("excludeId") Long excludeId);
 }
