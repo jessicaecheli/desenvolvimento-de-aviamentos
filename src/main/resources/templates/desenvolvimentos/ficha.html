@@ -105,13 +105,13 @@
         <td style="width:34%">
             <span class="label">Valor Inicial: </span>
             <input class="campo" type="text" style="width:60%"
-                   th:value="${dev.precoInicial != null ? 'R$ ' + #numbers.formatDecimal(dev.precoInicial, 1, 'POINT', 2, 'COMMA') : (orcamentoAprovado != null and orcamentoAprovado.valorMinimo != null ? 'R$ ' + #numbers.formatDecimal(orcamentoAprovado.valorMinimo, 1, 'POINT', 2, 'COMMA') : '')}"/>
+                   th:value="${dev.precoInicial != null ? 'R$ ' + #numbers.formatDecimal(dev.precoInicial, 1, 'POINT', 4, 'COMMA') : (orcamentoAprovado != null and orcamentoAprovado.valorMinimo != null ? 'R$ ' + #numbers.formatDecimal(orcamentoAprovado.valorMinimo, 1, 'POINT', 4, 'COMMA') : '')}"/>
         </td>
         <td style="width:33%">
             <div style="display:flex; align-items:center; gap:4px;">
                 <span class="label" style="white-space:nowrap;">Valor Negociado: </span>
                 <input class="campo" type="text" style="flex:1; min-width:0;"
-                       th:value="${dev.precoFinal != null ? 'R$ ' + #numbers.formatDecimal(dev.precoFinal, 1, 'POINT', 2, 'COMMA') : ''}"/>
+                       th:value="${dev.precoFinal != null ? 'R$ ' + #numbers.formatDecimal(dev.precoFinal, 1, 'POINT', 4, 'COMMA') : ''}"/>
             </div>
         </td>
     </tr>

@@ -39,10 +39,15 @@ public class DadosTecido {
     private String reserva;
     private LocalDate dataTermino;
 
+    @Column(precision = 19, scale = 4)
     private BigDecimal preco;
+    @Column(precision = 19, scale = 4)
     private BigDecimal precoNegociado;
+    @Column(precision = 19, scale = 4)
     private BigDecimal precoEmDolar;
+    @Column(precision = 19, scale = 4)
     private BigDecimal precoNegociadoEmDolar;
+    @Column(precision = 19, scale = 4)
     private BigDecimal valorDolar;
     private BigDecimal rendimento;
 

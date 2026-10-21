@@ -102,7 +102,7 @@
                     </td>
                     <td th:text="${fornecedoresPorDev[d.id]}"></td>
                     <td th:text="${#temporals.format(d.dataCriacao,'dd/MM/yyyy')}"></td>
-                    <td th:text="${d.previsaoAmostra != null ? #temporals.format(d.previsaoAmostra,'dd/MM/yyyy') : (previsaoAmostraPorDev[d.id] != null ? #temporals.format(previsaoAmostraPorDev[d.id],'dd/MM/yyyy') : '-')}"></td>
+                    <td th:text="${previsaoAmostraPorDev[d.id] != null ? #temporals.format(previsaoAmostraPorDev[d.id],'dd/MM/yyyy') : '-'}"></td>
                     <td class="text-end">
                         <a th:href="@{/desenvolvimentos/{id}(id=${d.id})}" class="btn btn-sm btn-outline-info">
                             <i class="bi bi-eye"></i>

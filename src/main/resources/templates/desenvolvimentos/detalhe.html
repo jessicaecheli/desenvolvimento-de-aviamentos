@@ -30,6 +30,11 @@
                 <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
                 <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
                     (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
+                <span th:if="${dev.familia != null}">&nbsp; Família: <strong th:text="${dev.familia}"></strong></span>
+                <span th:if="${dev.precoTarget != null}">&nbsp; Target:
+                    <strong th:text="${'R$ ' + #numbers.formatDecimal(dev.precoTarget, 1, 'POINT', 4, 'COMMA')}"></strong></span>
+                <span th:if="${prazoAmostra != null}">&nbsp; Prazo amostra:
+                    <strong th:text="${#temporals.format(prazoAmostra,'dd/MM/yyyy')}"></strong></span>
             </small>
             <small th:if="${dev.codigoSystextil1 != null or dev.codigoSystextil2 != null or dev.codigoSystextil3 != null}"
                    class="text-muted d-block">
@@ -65,9 +70,26 @@
                                     <i class="bi bi-building"></i>
                                     <span th:text="${e.orcamento.fornecedor ?: '(sem fornecedor)'}"></span>
                                 </div>
+                                <div th:if="${e.tipo.name() == 'ALTERACAO'}" class="small">
+                                    <span th:class="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'badge bg-primary-subtle text-primary-emphasis' : 'badge bg-warning-subtle text-warning-emphasis'"
+                                          th:title="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'Reiniciou o prazo da amostra' : 'Mantém o prazo original da amostra'"
+                                          th:text="${e.motivoAlteracao != null ? e.motivoAlteracao.labelCurto : 'Fornecedor (não informado)'}"></span>
+                                    <a href="#" class="ms-1" data-bs-toggle="collapse"
+                                       th:data-bs-target="'#motivoAlt' + ${e.id}">trocar</a>
+                                    <div th:id="'motivoAlt' + ${e.id}" class="collapse mt-1">
+                                        <form th:action="@{/desenvolvimentos/{id}/etapa/{etapaId}/motivo(id=${dev.id},etapaId=${e.id})}"
+                                              method="post" class="d-flex gap-1">
+                                            <select name="motivoAlteracao" class="form-select form-select-sm">
+                                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"
+                                                        th:selected="${e.motivoAlteracao == m or (e.motivoAlteracao == null and m.name() == 'FORNECEDOR')}"></option>
+                                            </select>
+                                            <button class="btn btn-sm btn-primary">OK</button>
+                                        </form>
+                                    </div>
+                                </div>
                                 <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
                                 <div th:if="${e.custoAmostra != null}" class="small text-warning fw-semibold">
-                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
+                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 4, 'COMMA')}"></span>
                                 </div>
                                 <div th:if="${e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
@@ -130,7 +152,16 @@
                         <!-- Custo da amostra — aparece só para AMOSTRA -->
                         <div class="mb-2" id="campoCustoAmostra" style="display:none">
                             <label class="form-label fw-semibold">Custo da Amostra (R$)</label>
-                            <input type="number" name="custoAmostra" step="0.01" class="form-control" placeholder="0,00"/>
+                            <input type="number" name="custoAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
+                        </div>
+                        <!-- Motivo da alteração — aparece só para ALTERACAO -->
+                        <div class="mb-2" id="campoMotivoAlteracao" style="display:none">
+                            <label class="form-label fw-semibold">Motivo da Alteração</label>
+                            <select name="motivoAlteracao" class="form-select">
+                                <option value="">-- selecione o motivo --</option>
+                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"></option>
+                            </select>
+                            <div class="form-text">Estilo reinicia o prazo da amostra; divergência do fornecedor mantém o prazo original.</div>
                         </div>
                         <input type="hidden" name="dataOcorrencia"
                                th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
@@ -178,15 +209,15 @@
                                 <div th:if="${o.tamanho != null}" class="d-flex justify-content-between small">
                                     <span class="text-muted" th:text="${o.tamanho}"></span>
                                     <span class="fw-semibold"
-                                          th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                          th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
                                 </div>
                                 <div th:if="${o.tamanho2 != null}" class="d-flex justify-content-between small">
                                     <span class="text-muted" th:text="${o.tamanho2}"></span>
-                                    <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                    <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
                                 </div>
                                 <div th:if="${o.tamanho3 != null}" class="d-flex justify-content-between small">
                                     <span class="text-muted" th:text="${o.tamanho3}"></span>
-                                    <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 2, 'COMMA') : '-'}"></span>
+                                    <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
                                 </div>
                             </div>
 
@@ -218,7 +249,7 @@
                                                    th:value="${o.tamanho}" placeholder="Tam. 1"/>
                                         </div>
                                         <div class="col-6">
-                                            <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
+                                            <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"
                                                    th:value="${o.valor}" placeholder="Preço T1"/>
                                         </div>
                                         <div class="col-6">
@@ -226,7 +257,7 @@
                                                    th:value="${o.tamanho2}" placeholder="Tam. 2"/>
                                         </div>
                                         <div class="col-6">
-                                            <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
+                                            <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"
                                                    th:value="${o.valor2}" placeholder="Preço T2"/>
                                         </div>
                                         <div class="col-6">
@@ -234,7 +265,7 @@
                                                    th:value="${o.tamanho3}" placeholder="Tam. 3"/>
                                         </div>
                                         <div class="col-6">
-                                            <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
+                                            <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"
                                                    th:value="${o.valor3}" placeholder="Preço T3"/>
                                         </div>
                                         <div class="col-12">
@@ -275,7 +306,7 @@
                                                placeholder="Tam. 1 (P, 38...)"/>
                                     </div>
                                     <div class="col-6">
-                                        <input type="number" name="valor" step="0.01" class="form-control form-control-sm"
+                                        <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"
                                                placeholder="Preço T1"/>
                                     </div>
                                     <div class="col-6">
@@ -283,7 +314,7 @@
                                                placeholder="Tam. 2"/>
                                     </div>
                                     <div class="col-6">
-                                        <input type="number" name="valor2" step="0.01" class="form-control form-control-sm"
+                                        <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"
                                                placeholder="Preço T2"/>
                                     </div>
                                     <div class="col-6">
@@ -291,7 +322,7 @@
                                                placeholder="Tam. 3"/>
                                     </div>
                                     <div class="col-6">
-                                        <input type="number" name="valor3" step="0.01" class="form-control form-control-sm"
+                                        <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"
                                                placeholder="Preço T3"/>
                                     </div>
                                     <div class="col-12">
@@ -328,16 +359,16 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold small">Preço Inicial (R$)</label>
                                 <input type="number" name="precoInicial" id="negPrecoInicial"
-                                       step="0.01" class="form-control"
+                                       step="0.0001" class="input-reais form-control"
                                        th:value="${dev.precoInicial != null ? dev.precoInicial : precoInicialSugerido}"
-                                       placeholder="0,00"/>
+                                       placeholder="0,0000"/>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold small">Preço Final (R$)</label>
                                 <input type="number" name="precoFinal" id="negPrecoFinal"
-                                       step="0.01" class="form-control"
+                                       step="0.0001" class="input-reais form-control"
                                        th:value="${dev.precoFinal}"
-                                       placeholder="0,00"/>
+                                       placeholder="0,0000"/>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold small">Qtd Compra Mostruário</label>
@@ -378,9 +409,14 @@
         const tipoSelect  = document.querySelector('select[name="tipo"]');
         const campoOrc    = document.getElementById('campoOrcamento');
         const campoCusto  = document.getElementById('campoCustoAmostra');
+        const campoMotivo = document.getElementById('campoMotivoAlteracao');
+        const selMotivo   = campoMotivo.querySelector('select');
         function atualizar() {
             campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
             campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
+            const isAlt = tipoSelect.value === 'ALTERACAO';
+            campoMotivo.style.display = isAlt ? '' : 'none';
+            selMotivo.required = isAlt;
         }
         tipoSelect.addEventListener('change', atualizar);
         atualizar();
@@ -402,7 +438,9 @@
             if (!ini || ini <= 0 || isNaN(fin)) { elPreview.style.display = 'none'; return; }
             const pct = ((ini - fin) / ini) * 100;
             elDesc.textContent = fmtBR(pct) + '%';
-            elTotal.textContent = (!isNaN(qtd) && qtd > 0) ? 'R$ ' + fmtBR((ini - fin) * qtd) : '—';
+            elTotal.textContent = (!isNaN(qtd) && qtd > 0)
+                ? 'R$ ' + ((ini - fin) * qtd).toLocaleString('pt-BR', {minimumFractionDigits: 4, maximumFractionDigits: 4})
+                : '—';
             elPreview.style.display = '';
         }
 

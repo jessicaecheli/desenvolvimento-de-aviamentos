@@ -136,6 +136,36 @@
       e.target.setSelectionRange(pos, pos);
     }
   });
+
+  // Padrão para campos em reais: prefixo "R$" e 4 casas decimais.
+  // Para um campo novo seguir o padrão, basta usar class="input-reais" no <input type="number">.
+  (function () {
+    function formatar(el) {
+      if (el.value === '' || isNaN(Number(el.value))) return;
+      el.value = Number(el.value).toFixed(4);
+    }
+    function preparar(el) {
+      el.step = '0.0001';
+      if (!el.parentElement.classList.contains('input-group')) {
+        const grupo = document.createElement('div');
+        grupo.className = 'input-group' + (el.classList.contains('form-control-sm') ? ' input-group-sm' : '');
+        const prefixo = document.createElement('span');
+        prefixo.className = 'input-group-text';
+        prefixo.textContent = 'R$';
+        el.parentNode.insertBefore(grupo, el);
+        grupo.appendChild(prefixo);
+        grupo.appendChild(el);
+      }
+      formatar(el);
+      el.addEventListener('change', function () { formatar(el); });
+    }
+    window.formatarCamposReais = function (raiz) {
+      (raiz || document).querySelectorAll('input.input-reais').forEach(formatar);
+    };
+    document.querySelectorAll('input.input-reais').forEach(preparar);
+    // valores preenchidos por script ao abrir modais (ex.: editar etapa)
+    document.addEventListener('shown.bs.modal', function (e) { window.formatarCamposReais(e.target); });
+  })();
 </script>
 </body>
 </html>

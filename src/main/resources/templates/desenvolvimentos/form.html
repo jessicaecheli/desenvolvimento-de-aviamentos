@@ -55,6 +55,19 @@
                                 th:selected="${desenvolvimento.categoria != null and desenvolvimento.categoria.id == s.id}"></option>
                     </select>
                 </div>
+                <!-- Família — aparece só para a subcategoria Strass -->
+                <div id="wrapFamilia" style="display:none" class="mt-2">
+                    <label class="form-label fw-semibold">Família</label>
+                    <input type="text" id="inputFamilia" name="familia" class="form-control uppercase-input"
+                           maxlength="100" placeholder="Família do strass (se houver)"
+                           th:value="${desenvolvimento.familia}"/>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Target (R$)</label>
+                <input type="number" name="precoTarget" step="0.0001" min="0" class="input-reais form-control"
+                       placeholder="0,0000 — deixe em branco se não houver target"
+                       th:value="${desenvolvimento.precoTarget}"/>
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
@@ -150,13 +163,26 @@
         ajustarStatusParaTecido();
     });
 
+    const wrapFamilia  = document.getElementById('wrapFamilia');
+    const inputFamilia = document.getElementById('inputFamilia');
+    function mostrarFamilia() {
+        const opt = sub.options[sub.selectedIndex];
+        const isStrass = !!(sub.value && opt && opt.text.toUpperCase().includes('STRASS'));
+        wrapFamilia.style.display = isStrass ? 'block' : 'none';
+        inputFamilia.disabled = !isStrass;   // não envia família fora do Strass
+    }
+
+    master.addEventListener('change', mostrarFamilia);
+
     sub.addEventListener('change', function() {
         // só auto-calcula se o campo previsão estiver vazio (novo) ou se o usuário não editou
         calcularPrevisao();
+        mostrarFamilia();
     });
 
     filtrar();
     ajustarStatusParaTecido();
+    mostrarFamilia();
 })();
 </script>
 </main>

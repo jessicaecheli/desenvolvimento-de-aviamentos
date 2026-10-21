@@ -48,10 +48,18 @@ public class Desenvolvimento {
     @Column(name = "previsao_amostra")
     private LocalDate previsaoAmostra;
 
-    @Column(precision = 19, scale = 2)
+    /** Família do strass — só preenchida quando a subcategoria é Strass. */
+    @Column(length = 100)
+    private String familia;
+
+    /** Preço-alvo (target) informado na inclusão — opcional, vale para todas as subcategorias. */
+    @Column(name = "preco_target", precision = 19, scale = 4)
+    private java.math.BigDecimal precoTarget;
+
+    @Column(precision = 19, scale = 4)
     private java.math.BigDecimal precoInicial;
 
-    @Column(precision = 19, scale = 2)
+    @Column(precision = 19, scale = 4)
     private java.math.BigDecimal precoFinal;
 
     private Integer qtdCompraMostruario;
@@ -90,6 +98,10 @@ public class Desenvolvimento {
     public void setDataCriacao(LocalDate dataCriacao) { this.dataCriacao = dataCriacao; }
     public LocalDate getPrevisaoAmostra() { return previsaoAmostra; }
     public void setPrevisaoAmostra(LocalDate previsaoAmostra) { this.previsaoAmostra = previsaoAmostra; }
+    public String getFamilia() { return familia; }
+    public void setFamilia(String familia) { this.familia = familia; }
+    public java.math.BigDecimal getPrecoTarget() { return precoTarget; }
+    public void setPrecoTarget(java.math.BigDecimal precoTarget) { this.precoTarget = precoTarget; }
     public List<EtapaDesenvolvimento> getEtapas() { return etapas; }
     public void setEtapas(List<EtapaDesenvolvimento> etapas) { this.etapas = etapas; }
     public List<Orcamento> getOrcamentos() { return orcamentos; }

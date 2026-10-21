@@ -98,7 +98,7 @@ public class DesenvolvimentoController {
 
         Map<Long, LocalDate> previsaoAmostraPorDev = new HashMap<>();
         for (Desenvolvimento d : lista) {
-            LocalDate prev = service.calcularPrevisaoAmostra(d);
+            LocalDate prev = service.prazoAmostraExibicao(d);
             if (prev != null) previsaoAmostraPorDev.put(d.getId(), prev);
         }
 
@@ -157,6 +157,8 @@ public class DesenvolvimentoController {
                          @RequestParam(required = false) String codigoSystextil2,
                          @RequestParam(required = false) String codigoSystextil3,
                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate previsaoAmostra,
+                         @RequestParam(required = false) String familia,
+                         @RequestParam(required = false) BigDecimal precoTarget,
                          RedirectAttributes ra,
                          Model model) {
         Desenvolvimento dev;
@@ -173,10 +175,18 @@ public class DesenvolvimentoController {
         if (colecaoId != null) dev.setColecao(colecaoService.buscarPorId(colecaoId));
         if (categoriaId != null) dev.setCategoria(categoriaService.buscarPorId(categoriaId));
         if (status != null) dev.setStatus(status);
-        dev.setCodigoSystextil1(codigoSystextil1);
-        dev.setCodigoSystextil2(codigoSystextil2);
-        dev.setCodigoSystextil3(codigoSystextil3);
+        // O formulário de cadastro não tem os códigos Systêxtil (são editados no card do detalhe,
+        // via /{id}/systextil). Só atualiza se vierem na requisição, para não apagá-los ao editar.
+        if (codigoSystextil1 != null) dev.setCodigoSystextil1(codigoSystextil1);
+        if (codigoSystextil2 != null) dev.setCodigoSystextil2(codigoSystextil2);
+        if (codigoSystextil3 != null) dev.setCodigoSystextil3(codigoSystextil3);
         dev.setPrevisaoAmostra(previsaoAmostra);
+        // Família só vale para a subcategoria Strass; em outras subcategorias fica vazia
+        boolean isStrass = dev.getCategoria() != null && dev.getCategoria().getNome() != null
+            && dev.getCategoria().getNome().toUpperCase().contains("STRASS");
+        dev.setFamilia(isStrass && familia != null && !familia.isBlank()
+            ? familia.trim().toUpperCase() : null);
+        dev.setPrecoTarget(precoTarget);   // opcional: vazio grava sem target
         List<Desenvolvimento> conflitosCodigo =
             desenvolvimentoRepository.findByCodigoDuplicado(dev.getCodigo(), id);
         if (!conflitosCodigo.isEmpty()) {
@@ -203,6 +213,8 @@ public class DesenvolvimentoController {
         model.addAttribute("tiposEtapa", TipoEtapa.values());
         model.addAttribute("atrasado", service.estaAtrasado(dev));
         model.addAttribute("diasAtraso", service.diasAtraso(dev));
+        model.addAttribute("prazoAmostra", service.prazoAmostraExibicao(dev));
+        model.addAttribute("motivosAlteracao", MotivoAlteracao.values());
 
         if (service.isTecido(dev)) {
             DadosTecido dadosTecido = dadosTecidoRepository.findByDesenvolvimentoId(id)
@@ -324,14 +336,29 @@ public class DesenvolvimentoController {
                                 @RequestParam(required = false) BigDecimal valorFrete,
                                 @RequestParam(required = false) BigDecimal valorAmostra,
                                 @RequestParam(required = false) String observacoesFaturamento,
+                                @RequestParam(required = false) MotivoAlteracao motivoAlteracao,
                                 RedirectAttributes ra) {
         if (tipo == null) {
             return "redirect:/desenvolvimentos/" + id;
         }
+        if (tipo == TipoEtapa.ALTERACAO && motivoAlteracao == null) {
+            ra.addFlashAttribute("erro", "Informe o motivo da alteração (estilo ou divergência do fornecedor).");
+            return "redirect:/desenvolvimentos/" + id;
+        }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
         service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra,
-                nf, valorFrete, valorAmostra, observacoesFaturamento);
+                nf, valorFrete, valorAmostra, observacoesFaturamento, motivoAlteracao);
         ra.addFlashAttribute("sucesso", "Etapa registrada com sucesso.");
+        return "redirect:/desenvolvimentos/" + id;
+    }
+
+    @PostMapping("/{id}/etapa/{etapaId}/motivo")
+    public String alterarMotivoAlteracao(@PathVariable Long id,
+                                          @PathVariable Long etapaId,
+                                          @RequestParam MotivoAlteracao motivoAlteracao,
+                                          RedirectAttributes ra) {
+        service.alterarMotivoAlteracao(id, etapaId, motivoAlteracao);
+        ra.addFlashAttribute("sucesso", "Motivo da alteração atualizado: " + motivoAlteracao.getLabel() + ".");
         return "redirect:/desenvolvimentos/" + id;
     }
 
@@ -408,15 +435,15 @@ public class DesenvolvimentoController {
         obsAlteracao.append(fornecedor != null && !fornecedor.isBlank() ? fornecedor : "(sem fornecedor)");
         if (tamanho != null && !tamanho.isBlank()) {
             obsAlteracao.append(" | ").append(tamanho);
-            if (valor != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor).replace('.', ','));
+            if (valor != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor).replace('.', ','));
         }
         if (tamanho2 != null && !tamanho2.isBlank()) {
             obsAlteracao.append(" | ").append(tamanho2);
-            if (valor2 != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor2).replace('.', ','));
+            if (valor2 != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor2).replace('.', ','));
         }
         if (tamanho3 != null && !tamanho3.isBlank()) {
             obsAlteracao.append(" | ").append(tamanho3);
-            if (valor3 != null) obsAlteracao.append(": R$").append(String.format("%.2f", valor3).replace('.', ','));
+            if (valor3 != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor3).replace('.', ','));
         }
         if (quantidade != null) obsAlteracao.append(" | Qtd: ").append(quantidade);
         if (observacao != null && !observacao.isBlank()) obsAlteracao.append(" | ").append(observacao);
@@ -454,8 +481,8 @@ public class DesenvolvimentoController {
         service.salvar(dev);
 
         StringBuilder obs = new StringBuilder("NEGOCIAÇÃO");
-        if (precoInicial != null) obs.append(" | Inicial: R$").append(String.format("%.2f", precoInicial).replace('.', ','));
-        if (precoFinal != null)   obs.append(" | Final: R$").append(String.format("%.2f", precoFinal).replace('.', ','));
+        if (precoInicial != null) obs.append(" | Inicial: R$ ").append(String.format("%.4f", precoInicial).replace('.', ','));
+        if (precoFinal != null)   obs.append(" | Final: R$ ").append(String.format("%.4f", precoFinal).replace('.', ','));
         if (precoInicial != null && precoFinal != null && precoInicial.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal pct = precoInicial.subtract(precoFinal)
                 .divide(precoInicial, 4, java.math.RoundingMode.HALF_UP)

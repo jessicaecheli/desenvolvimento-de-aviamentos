@@ -21,6 +21,10 @@
                 <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
                 <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
                     (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
+                <span th:if="${dev.precoTarget != null}">&nbsp; Target:
+                    <strong th:text="${'R$ ' + #numbers.formatDecimal(dev.precoTarget, 1, 'POINT', 4, 'COMMA')}"></strong></span>
+                <span th:if="${prazoAmostra != null}">&nbsp; Prazo amostra:
+                    <strong th:text="${#temporals.format(prazoAmostra,'dd/MM/yyyy')}"></strong></span>
             </small>
             <small th:if="${dev.codigoSystextil1 != null or dev.codigoSystextil2 != null or dev.codigoSystextil3 != null}"
                    class="text-muted d-block">
@@ -54,13 +58,30 @@
                             <div class="flex-grow-1">
                                 <div th:if="${e.nf}" class="small fw-semibold">NF: <span th:text="${e.nf}"></span></div>
                                 <div th:if="${e.valorAmostra != null}" class="small">
-                                    Vl. Amostra: R$ <span th:text="${#numbers.formatDecimal(e.valorAmostra, 1, 'POINT', 2, 'COMMA')}"></span>
+                                    Vl. Amostra: R$ <span th:text="${#numbers.formatDecimal(e.valorAmostra, 1, 'POINT', 4, 'COMMA')}"></span>
                                 </div>
                                 <div th:if="${e.valorFrete != null}" class="small">
-                                    Frete: R$ <span th:text="${#numbers.formatDecimal(e.valorFrete, 1, 'POINT', 2, 'COMMA')}"></span>
+                                    Frete: R$ <span th:text="${#numbers.formatDecimal(e.valorFrete, 1, 'POINT', 4, 'COMMA')}"></span>
                                 </div>
                                 <div th:if="${e.observacoesFaturamento}" class="small text-muted" th:text="${e.observacoesFaturamento}"></div>
                                 <div th:if="${e.observacao}" class="small text-muted" th:text="${e.observacao}"></div>
+                                <div th:if="${e.tipo.name() == 'ALTERACAO'}" class="small">
+                                    <span th:class="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'badge bg-primary-subtle text-primary-emphasis' : 'badge bg-warning-subtle text-warning-emphasis'"
+                                          th:title="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'Reiniciou o prazo da amostra' : 'Mantém o prazo original da amostra'"
+                                          th:text="${e.motivoAlteracao != null ? e.motivoAlteracao.labelCurto : 'Fornecedor (não informado)'}"></span>
+                                    <a href="#" class="ms-1" data-bs-toggle="collapse"
+                                       th:data-bs-target="'#motivoAlt' + ${e.id}">trocar</a>
+                                    <div th:id="'motivoAlt' + ${e.id}" class="collapse mt-1">
+                                        <form th:action="@{/desenvolvimentos/{id}/etapa/{etapaId}/motivo(id=${dev.id},etapaId=${e.id})}"
+                                              method="post" class="d-flex gap-1">
+                                            <select name="motivoAlteracao" class="form-select form-select-sm">
+                                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"
+                                                        th:selected="${e.motivoAlteracao == m or (e.motivoAlteracao == null and m.name() == 'FORNECEDOR')}"></option>
+                                            </select>
+                                            <button class="btn btn-sm btn-primary">OK</button>
+                                        </form>
+                                    </div>
+                                </div>
                                 <div th:if="${e.tipo.name() == 'ALTERACAO' and e.numeroRodada > 1}" class="small text-muted">
                                     Rodada <span th:text="${e.numeroRodada}"></span>
                                 </div>
@@ -199,6 +220,15 @@
                                         th:value="${t}" th:text="${t.label}"></option>
                             </select>
                         </div>
+                        <!-- Motivo da alteração — aparece só para ALTERACAO -->
+                        <div class="mb-2" id="campoMotivoAlteracao" style="display:none">
+                            <label class="form-label fw-semibold">Motivo da Alteração</label>
+                            <select name="motivoAlteracao" class="form-select">
+                                <option value="">-- selecione o motivo --</option>
+                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"></option>
+                            </select>
+                            <div class="form-text">Estilo reinicia o prazo da amostra; divergência do fornecedor mantém o prazo original.</div>
+                        </div>
                         <input type="hidden" name="dataOcorrencia"
                                th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
                         <div class="row g-2 mb-2">
@@ -208,11 +238,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Valor Frete (R$)</label>
-                                <input type="number" name="valorFrete" step="0.01" class="form-control" placeholder="0,00"/>
+                                <input type="number" name="valorFrete" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Valor Amostra (R$)</label>
-                                <input type="number" name="valorAmostra" step="0.01" class="form-control" placeholder="0,00"/>
+                                <input type="number" name="valorAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Observações de Faturamento</label>
@@ -247,8 +277,8 @@
                         <div class="row g-2">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Preço Inicial (R$)</label>
-                                <input type="number" name="preco" step="0.01" class="form-control" id="inputPreco"
-                                       th:value="${dadosTecido.preco}" placeholder="0,00"
+                                <input type="number" name="preco" step="0.0001" class="input-reais form-control" id="inputPreco"
+                                       th:value="${dadosTecido.preco}" placeholder="0,0000"
                                        oninput="calcReducao()"/>
                             </div>
                             <div class="col-md-6">
@@ -259,8 +289,8 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Preço Negociado (R$)</label>
-                                <input type="number" name="precoNegociado" step="0.01" class="form-control" id="inputPrecoNeg"
-                                       th:value="${dadosTecido.precoNegociado}" placeholder="0,00"
+                                <input type="number" name="precoNegociado" step="0.0001" class="input-reais form-control" id="inputPrecoNeg"
+                                       th:value="${dadosTecido.precoNegociado}" placeholder="0,0000"
                                        oninput="calcReducao()"/>
                             </div>
                             <div class="col-md-6">
@@ -316,11 +346,11 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Valor Frete (R$)</label>
-                                <input type="number" name="valorFrete" id="editValorFrete" step="0.01" class="form-control"/>
+                                <input type="number" name="valorFrete" id="editValorFrete" step="0.0001" class="input-reais form-control"/>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Valor Amostra (R$)</label>
-                                <input type="number" name="valorAmostra" id="editValorAmostra" step="0.01" class="form-control"/>
+                                <input type="number" name="valorAmostra" id="editValorAmostra" step="0.0001" class="input-reais form-control"/>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-semibold">Obs. Faturamento</label>
@@ -343,6 +373,18 @@
 
     <script>
     (function () {
+        const tipoSelect  = document.querySelector('select[name="tipo"]');
+        const campoMotivo = document.getElementById('campoMotivoAlteracao');
+        const selMotivo   = campoMotivo.querySelector('select');
+        function atualizarMotivo() {
+            const isAlt = tipoSelect.value === 'ALTERACAO';
+            campoMotivo.style.display = isAlt ? '' : 'none';
+            selMotivo.required = isAlt;
+        }
+        tipoSelect.addEventListener('change', atualizarMotivo);
+        atualizarMotivo();
+    }());
+    (function () {
         const tipoSelect = document.querySelector('select[name="tipo"]');
         const campoCusto = document.getElementById('campoCustoAmostraTecido');
         function atualizar() {
@@ -363,10 +405,10 @@
         const usdNeg = parseFloat(document.getElementById('inputPrecoNegUsd').value) || 0;
         if (cotacao > 0) {
             if (usd > 0) {
-                document.getElementById('inputPreco').value = (usd * cotacao).toFixed(2);
+                document.getElementById('inputPreco').value = (usd * cotacao).toFixed(4);
             }
             if (usdNeg > 0) {
-                document.getElementById('inputPrecoNeg').value = (usdNeg * cotacao).toFixed(2);
+                document.getElementById('inputPrecoNeg').value = (usdNeg * cotacao).toFixed(4);
             }
         }
         calcReducao();

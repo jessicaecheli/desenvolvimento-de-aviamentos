@@ -76,7 +76,8 @@ public class DesenvolvimentoService {
     public void avancarEtapa(Long id, TipoEtapa tipo, String observacao, LocalDate dataOcorrencia,
                               Orcamento orcamento, java.math.BigDecimal custoAmostra,
                               String nf, java.math.BigDecimal valorFrete,
-                              java.math.BigDecimal valorAmostra, String observacoesFaturamento) {
+                              java.math.BigDecimal valorAmostra, String observacoesFaturamento,
+                              MotivoAlteracao motivoAlteracao) {
         Desenvolvimento dev = buscarPorId(id);
 
         EtapaDesenvolvimento etapa = new EtapaDesenvolvimento();
@@ -98,6 +99,7 @@ public class DesenvolvimentoService {
                 .filter(e -> e.getTipo() == TipoEtapa.ALTERACAO)
                 .count();
             etapa.setNumeroRodada((int) rodadas + 1);
+            etapa.setMotivoAlteracao(motivoAlteracao);
         }
         if (tipo == TipoEtapa.REPETICAO) {
             long repeticoes = dev.getEtapas().stream()
@@ -112,13 +114,69 @@ public class DesenvolvimentoService {
         desenvolvimentoRepository.save(dev);
     }
 
+    @Transactional
+    public void alterarMotivoAlteracao(Long devId, Long etapaId, MotivoAlteracao motivo) {
+        EtapaDesenvolvimento etapa = etapaRepository.findById(etapaId)
+            .filter(e -> e.getDesenvolvimento().getId().equals(devId)
+                && e.getTipo() == TipoEtapa.ALTERACAO)
+            .orElseThrow(() -> new IllegalArgumentException("Etapa de alteração não encontrada."));
+        etapa.setMotivoAlteracao(motivo);
+        etapaRepository.save(etapa);
+    }
+
+    /**
+     * Data-limite fixa da amostra, quando houver:
+     * 1) última alteração de ESTILO → data da alteração + prazo da subcategoria (reinicia o prazo);
+     * 2) senão, a Previsão de Amostra informada no cadastro.
+     * Alterações por divergência do FORNECEDOR (ou antigas, sem motivo) não mudam o prazo.
+     * Retorna null quando o prazo deve ser contado pela 1ª etapa AMOSTRA (fallback).
+     */
+    public LocalDate previsaoAmostraVigente(Desenvolvimento dev) {
+        if (dev.getCategoria() != null && dev.getCategoria().getPrazoDiasUteis() != null) {
+            Optional<EtapaDesenvolvimento> ultimaAltEstilo = etapaRepository
+                .findFirstByDesenvolvimentoIdAndTipoAndMotivoAlteracaoOrderByDataOcorrenciaDescIdDesc(
+                    dev.getId(), TipoEtapa.ALTERACAO, MotivoAlteracao.ESTILO);
+            if (ultimaAltEstilo.isPresent()) {
+                return adicionarDiasUteis(ultimaAltEstilo.get().getDataOcorrencia(),
+                    dev.getCategoria().getPrazoDiasUteis());
+            }
+        }
+        return dev.getPrevisaoAmostra();
+    }
+
+    /**
+     * Prazo da amostra para exibição (último dia sem atraso), seguindo a mesma regra de estaAtrasado.
+     * Antes da 1ª amostra, usa a estimativa pela data de criação.
+     */
+    public LocalDate prazoAmostraExibicao(Desenvolvimento dev) {
+        LocalDate fixa = previsaoAmostraVigente(dev);
+        if (fixa != null) return fixa;
+        if (dev.getCategoria() == null || dev.getCategoria().getPrazoDiasUteis() == null) return null;
+        Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
+            .findFirstByDesenvolvimentoIdAndTipoOrderByDataOcorrenciaAsc(dev.getId(), TipoEtapa.AMOSTRA);
+        if (primeiraAmostra.isEmpty()) return calcularPrevisaoAmostra(dev);
+        // último dia em que calcularDiasUteis(inicio, dia) <= prazo
+        int prazo = dev.getCategoria().getPrazoDiasUteis();
+        LocalDate data = primeiraAmostra.get().getDataOcorrencia();
+        LocalDate ultimoDiaNoPrazo = data;
+        int contados = 0;
+        while (true) {
+            DayOfWeek dow = data.getDayOfWeek();
+            if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) contados++;
+            if (contados > prazo) return ultimoDiaNoPrazo;
+            ultimoDiaNoPrazo = data;
+            data = data.plusDays(1);
+        }
+    }
+
     public boolean estaAtrasado(Desenvolvimento dev) {
         if (dev.getStatus() != StatusDesenvolvimento.AMOSTRA &&
             dev.getStatus() != StatusDesenvolvimento.ALTERACAO) {
             return false;
         }
-        if (dev.getPrevisaoAmostra() != null) {
-            return LocalDate.now().isAfter(dev.getPrevisaoAmostra());
+        LocalDate previsao = previsaoAmostraVigente(dev);
+        if (previsao != null) {
+            return LocalDate.now().isAfter(previsao);
         }
         // fallback: cálculo pela data da primeira etapa AMOSTRA + prazo da subcategoria
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
@@ -130,8 +188,9 @@ public class DesenvolvimentoService {
     }
 
     public long diasAtraso(Desenvolvimento dev) {
-        if (dev.getPrevisaoAmostra() != null) {
-            return Math.max(0, calcularDiasUteis(dev.getPrevisaoAmostra(), LocalDate.now()) - 1);
+        LocalDate previsao = previsaoAmostraVigente(dev);
+        if (previsao != null) {
+            return Math.max(0, calcularDiasUteis(previsao, LocalDate.now()) - 1);
         }
         // fallback
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository
@@ -143,8 +202,9 @@ public class DesenvolvimentoService {
     }
 
     public long diasRestantes(Desenvolvimento dev) {
-        if (dev.getPrevisaoAmostra() != null) {
-            return calcularDiasUteis(LocalDate.now(), dev.getPrevisaoAmostra()) - 1;
+        LocalDate previsao = previsaoAmostraVigente(dev);
+        if (previsao != null) {
+            return calcularDiasUteis(LocalDate.now(), previsao) - 1;
         }
         // fallback
         Optional<EtapaDesenvolvimento> primeiraAmostra = etapaRepository

@@ -74,7 +74,7 @@
             <div class="card shadow-sm border-0 bg-info text-white h-100">
                 <div class="card-body">
                     <div class="fs-2 fw-bold"
-                         th:text="${'R$ ' + #numbers.formatDecimal(dashboard.totalCustoAmostras, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
+                         th:text="${'R$ ' + #numbers.formatDecimal(dashboard.totalCustoAmostras, 1, 'POINT', 4, 'COMMA')}">R$ 0,0000</div>
                     <div>Custo Amostras</div>
                     <div class="small opacity-75">(valor cobrado + frete)</div>
                 </div>
@@ -90,8 +90,8 @@
                     <div class="fs-2 fw-bold" th:unless="${dashboard.percentualDescontoMedio != null}">-</div>
                     <div>% desconto médio sobre item</div>
                     <div class="mt-2 small opacity-75"
-                         th:text="${dashboard.totalDescontoNegociado != null ? 'R$ ' + #numbers.formatDecimal(dashboard.totalDescontoNegociado, 1, 'POINT', 2, 'COMMA') : 'R$ 0,00'}">
-                        R$ 0,00
+                         th:text="${dashboard.totalDescontoNegociado != null ? 'R$ ' + #numbers.formatDecimal(dashboard.totalDescontoNegociado, 1, 'POINT', 4, 'COMMA') : 'R$ 0,0000'}">
+                        R$ 0,0000
                     </div>
                     <div class="small opacity-75">Negociação - Compra dos Mostruários</div>
                 </div>

@@ -32,19 +32,24 @@ public class EtapaDesenvolvimento {
     @JoinColumn(name = "orcamento_id")
     private Orcamento orcamento;
 
-    @Column(name = "custo_amostra", precision = 19, scale = 2)
+    @Column(name = "custo_amostra", precision = 19, scale = 4)
     private BigDecimal custoAmostra;
 
     private String nf;
 
-    @Column(name = "valor_frete", precision = 19, scale = 2)
+    @Column(name = "valor_frete", precision = 19, scale = 4)
     private BigDecimal valorFrete;
 
-    @Column(name = "valor_amostra", precision = 19, scale = 2)
+    @Column(name = "valor_amostra", precision = 19, scale = 4)
     private BigDecimal valorAmostra;
 
     @Column(name = "observacoes_faturamento", columnDefinition = "TEXT")
     private String observacoesFaturamento;
+
+    /** Só para etapas ALTERACAO; nulo nas antigas (tratado como FORNECEDOR). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motivo_alteracao", columnDefinition = "varchar(20)")
+    private MotivoAlteracao motivoAlteracao;
 
     public EtapaDesenvolvimento() {}
 
@@ -72,4 +77,6 @@ public class EtapaDesenvolvimento {
     public void setValorAmostra(BigDecimal valorAmostra) { this.valorAmostra = valorAmostra; }
     public String getObservacoesFaturamento() { return observacoesFaturamento; }
     public void setObservacoesFaturamento(String observacoesFaturamento) { this.observacoesFaturamento = observacoesFaturamento; }
+    public MotivoAlteracao getMotivoAlteracao() { return motivoAlteracao; }
+    public void setMotivoAlteracao(MotivoAlteracao motivoAlteracao) { this.motivoAlteracao = motivoAlteracao; }
 }
