@@ -26,6 +26,26 @@ public class DashboardService {
         this.desenvolvimentoService = desenvolvimentoService;
     }
 
+    private static final java.util.regex.Pattern NUMERO_INICIAL = java.util.regex.Pattern.compile("^\\s*(\\d+)");
+
+    /**
+     * Ordena por subcategoria em ordem crescente pelo número do início do nome
+     * ("5 - X" antes de "11 - Y"), desempatando pelo nome (padrão pt-BR).
+     * Nomes sem número vão para o final.
+     */
+    private static <V> Map<String, V> ordenarPorSubcategoria(Map<String, V> mapa) {
+        java.text.Collator collator = java.text.Collator.getInstance(Locale.of("pt", "BR"));
+        Comparator<String> porNumeroDepoisNome = Comparator
+            .comparingLong((String s) -> {
+                java.util.regex.Matcher m = NUMERO_INICIAL.matcher(s);
+                return m.find() ? Long.parseLong(m.group(1)) : Long.MAX_VALUE;
+            })
+            .thenComparing(collator::compare);
+        Map<String, V> ordenado = new TreeMap<>(porNumeroDepoisNome);
+        ordenado.putAll(mapa);
+        return ordenado;
+    }
+
     public DashboardDTO gerarDashboard() {
         return gerarDashboard(null, null);
     }
@@ -118,10 +138,10 @@ public class DashboardService {
         }
         Map<String, Double> medias = new LinkedHashMap<>();
         leadtimesPrimeiraLib.forEach((k, v) -> medias.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
-        dto.setLeadtimeMediaPorCategoria(medias);
+        dto.setLeadtimeMediaPorCategoria(ordenarPorSubcategoria(medias));
         Map<String, Double> mediasFinais = new LinkedHashMap<>();
         leadtimesUltimaLib.forEach((k, v) -> mediasFinais.put(k, v.stream().mapToLong(Long::longValue).average().orElse(0)));
-        dto.setLeadtimeMediaFinalPorCategoria(mediasFinais);
+        dto.setLeadtimeMediaFinalPorCategoria(ordenarPorSubcategoria(mediasFinais));
 
         // Histórico de atrasados (todos que já ultrapassaram o prazo na fase de amostra)
         Set<TipoEtapa> faseAmostra = Set.of(TipoEtapa.AMOSTRA, TipoEtapa.ALTERACAO);
@@ -190,16 +210,8 @@ public class DashboardService {
             .collect(Collectors.groupingBy(
                 d -> d.getCategoria().getNome(),
                 Collectors.counting()
-            ))
-            .entrySet().stream()
-            .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                Map.Entry::getValue,
-                (a, b) -> a,
-                LinkedHashMap::new
             ));
-        dto.setTotalPorSubcategoria(porSubcategoria);
+        dto.setTotalPorSubcategoria(ordenarPorSubcategoria(porSubcategoria));
 
         // Aprovados por subcategoria e fornecedor
         List<Desenvolvimento> aprovadosComSubcat = todos.stream()
@@ -233,7 +245,7 @@ public class DashboardService {
                     .collect(Collectors.toMap(
                         Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new)));
         }
-        dto.setAprovadosPorSubcategoriaFornecedor(aprovadosPorSubcatFornecedor);
+        dto.setAprovadosPorSubcategoriaFornecedor(ordenarPorSubcategoria(aprovadosPorSubcatFornecedor));
 
         // Quantidade por marca (inclui todos os status)
         Map<String, Long> porMarca = todos.stream()

@@ -184,14 +184,18 @@
                     <div th:unless="${dashboard.aprovadosPorSubcategoriaFornecedor == null or #maps.isEmpty(dashboard.aprovadosPorSubcategoriaFornecedor)}">
                         <div class="px-3 pt-2 pb-2">
                             <select class="form-select form-select-sm" onchange="filtrarAprovSubcat(this)">
-                                <option value="">Todas as subcategorias</option>
+                                <option value="">-- selecione a subcategoria --</option>
                                 <option th:each="entry : ${dashboard.aprovadosPorSubcategoriaFornecedor}"
                                         th:value="${entry.key}" th:text="${entry.key}"></option>
+                                <option value="*">Todas as subcategorias</option>
                             </select>
+                        </div>
+                        <div id="aprovSubcatVazio" class="px-3 pb-3 small text-muted">
+                            Selecione uma subcategoria para ver os fornecedores.
                         </div>
                         <div th:each="entry : ${dashboard.aprovadosPorSubcategoriaFornecedor}"
                              th:attr="data-subcat=${entry.key}"
-                             class="aprov-subcat-block">
+                             class="aprov-subcat-block" style="display:none">
                             <div class="px-3 small fw-semibold text-muted border-top pt-1"
                                  th:text="${entry.key}"></div>
                             <table class="table table-sm mb-0">
@@ -301,8 +305,9 @@
     function filtrarAprovSubcat(sel) {
         var val = sel.value;
         document.querySelectorAll('.aprov-subcat-block').forEach(function(el) {
-            el.style.display = (!val || el.dataset.subcat === val) ? '' : 'none';
+            el.style.display = (val === '*' || el.dataset.subcat === val) ? '' : 'none';
         });
+        document.getElementById('aprovSubcatVazio').style.display = val ? 'none' : '';
     }
     </script>
 </main>
