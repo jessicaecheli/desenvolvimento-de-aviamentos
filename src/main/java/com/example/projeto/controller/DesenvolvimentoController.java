@@ -68,43 +68,14 @@ public class DesenvolvimentoController {
                         @RequestParam(required = false) String codigo,
                         @RequestParam(required = false) String fornecedor,
                         Model model) {
-        List<Desenvolvimento> lista = service.listarComFiltros(colecaoId, marcaIds, categoriaMasterId, categoriaId, status, codigo, fornecedor);
-
-        Set<StatusDesenvolvimento> statusComFornecedor = Set.of(
-            StatusDesenvolvimento.AMOSTRA, StatusDesenvolvimento.LIBERADA, StatusDesenvolvimento.APROVADO);
-        List<Long> idsComStatus = lista.stream()
-            .filter(d -> statusComFornecedor.contains(d.getStatus()))
-            .map(Desenvolvimento::getId)
-            .toList();
-        Map<Long, String> fornecedoresPorDev = new HashMap<>();
-        if (!idsComStatus.isEmpty()) {
-            List<EtapaDesenvolvimento> etapas = etapaRepository.findEtapasComOrcamentoPorDesenvolvimentos(
-                idsComStatus, List.of(TipoEtapa.AMOSTRA, TipoEtapa.LIBERADA, TipoEtapa.APROVADO));
-            for (EtapaDesenvolvimento e : etapas) {
-                Long devId = e.getDesenvolvimento().getId();
-                if (!fornecedoresPorDev.containsKey(devId) && e.getOrcamento() != null) {
-                    fornecedoresPorDev.put(devId, e.getOrcamento().getFornecedor());
-                }
-            }
-        }
-        // Tecidos armazenam fornecedor direto em DadosTecido (sem orçamento/etapa)
-        List<Long> todosIds = lista.stream().map(Desenvolvimento::getId).toList();
-        dadosTecidoRepository.findByDesenvolvimentoIdIn(todosIds).forEach(dt -> {
-            if (!fornecedoresPorDev.containsKey(dt.getDesenvolvimento().getId())
-                    && dt.getFornecedor() != null) {
-                fornecedoresPorDev.put(dt.getDesenvolvimento().getId(), dt.getFornecedor().getNome());
-            }
-        });
-
-        Map<Long, LocalDate> previsaoAmostraPorDev = new HashMap<>();
-        for (Desenvolvimento d : lista) {
-            LocalDate prev = service.prazoAmostraExibicao(d);
-            if (prev != null) previsaoAmostraPorDev.put(d.getId(), prev);
-        }
+        List<Desenvolvimento> lista = new ArrayList<>(
+            service.listarComFiltros(colecaoId, marcaIds, categoriaMasterId, categoriaId, status, codigo, fornecedor));
+        // Sempre do mais recente incluído para o mais antigo (data de criação; desempate pelo id)
+        lista.sort(Comparator.comparing(Desenvolvimento::getDataCriacao,
+                Comparator.nullsLast(Comparator.reverseOrder()))
+            .thenComparing(Desenvolvimento::getId, Comparator.nullsLast(Comparator.reverseOrder())));
 
         model.addAttribute("desenvolvimentos", lista);
-        model.addAttribute("fornecedoresPorDev", fornecedoresPorDev);
-        model.addAttribute("previsaoAmostraPorDev", previsaoAmostraPorDev);
         model.addAttribute("marcas", marcaService.listarTodas());
         model.addAttribute("colecoes", colecaoService.listarTodas());
         model.addAttribute("categoriasMaster", categoriaService.listarMasters());

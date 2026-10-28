@@ -4,452 +4,554 @@
 <head><title th:text="${dev.codigo}">Detalhe</title></head>
 <body>
 <main th:fragment="content">
-    <!-- Mensagens -->
-    <div th:if="${erro}" class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${erro}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill"></i> <span th:text="${sucesso}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<style>
+    /* Detalhe do desenvolvimento — tokens do design system Tex Cotton */
+    .det-dev {
+        --bg-main: #f5f5f0;
+        --bg-card: #ffffff;
+        --accent: #d4a843;
+        --accent-hover: #c49a35;
+        --accent-light: rgba(212, 168, 67, 0.08);
+        --accent-border: rgba(212, 168, 67, 0.2);
+        --text-primary: #1a1a1a;
+        --text-secondary: #6b6b6b;
+        --text-muted: #9a9a9a;
+        --border: #e8e8e3;
+        --border-light: #f0f0eb;
+        --success: #2d8a4e;
+        --warning: #e6a817;
+        --danger: #c9453e;
+        --info: #3b7dd8;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13.5px;
+        color: var(--text-primary);
+        min-width: 0;
+    }
+    #main-content:has(.det-dev) { background: #f5f5f0; min-width: 0; }
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-start mb-3">
+    /* Cabeçalho */
+    .dd-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+    .dd-titulo { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .dd-titulo h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+    .dd-desc { color: var(--text-secondary); margin: 2px 0 10px; }
+    .dd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dd-chip {
+        background: var(--bg-card); border: 1px solid var(--border); border-radius: 999px;
+        padding: 3px 10px; font-size: 12px; color: var(--text-secondary);
+    }
+    .dd-chip b { color: var(--text-primary); font-weight: 600; }
+    .dd-chip.alerta { border-color: rgba(201,69,62,.3); background: rgba(201,69,62,.06); color: var(--danger); }
+    .dd-chip.alerta b { color: var(--danger); }
+    .dd-acoes { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Botões */
+    .dd-btn-primary {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        background: var(--accent); color: #1a1a1a; border: none; border-radius: var(--radius-sm);
+        padding: 9px 18px; font-size: 13.5px; font-weight: 600; font-family: inherit;
+        transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .dd-btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .dd-btn-primary.sm { padding: 6px 12px; font-size: 12.5px; }
+    .dd-btn-ghost {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        background: var(--bg-card); border: 1px solid var(--border); color: var(--text-secondary);
+        border-radius: var(--radius-sm); padding: 6px 12px; font-size: 12.5px; font-weight: 500;
+        text-decoration: none; font-family: inherit; cursor: pointer; transition: background .15s;
+    }
+    .dd-btn-ghost:hover { background: var(--bg-main); color: var(--text-primary); }
+
+    /* Grade: coluna principal + histórico à direita */
+    .dd-grade { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 16px; align-items: start; }
+    .dd-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .dd-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .dd-card-h {
+        display: flex; justify-content: space-between; align-items: center; gap: 8px;
+        padding: 12px 16px; border-bottom: 1px solid var(--border-light);
+    }
+    .dd-card-h h3 {
+        margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+        color: var(--text-secondary); display: flex; align-items: center; gap: 8px;
+    }
+    .dd-card-b { padding: 14px 16px; }
+    .dd-contador { font-size: 11px; background: var(--bg-main); border-radius: 999px; padding: 2px 8px; color: var(--text-secondary); }
+
+    /* Formulários */
+    .det-dev label.dd-label {
+        display: block; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+        color: var(--text-muted); margin-bottom: 4px;
+    }
+    .det-dev .form-control, .det-dev .form-select {
+        background-color: var(--bg-main); border: 1px solid var(--border); border-radius: var(--radius-sm);
+        font-size: 13px; color: var(--text-primary); font-family: inherit;
+    }
+    .det-dev .form-control:focus, .det-dev .form-select:focus {
+        border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); background-color: #fff;
+    }
+    .det-dev .input-group-text { background: var(--bg-main); border-color: var(--border); color: var(--text-muted); font-size: 12px; }
+    .det-dev .form-text { color: var(--text-muted); font-size: 11.5px; }
+    .dd-linha { display: grid; gap: 10px; align-items: end; }
+    .dd-sys { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+    .dd-etapa { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dd-neg { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+    .dd-orc-form { grid-template-columns: 2fr repeat(6, minmax(0, 1fr)); }
+    .dd-orc-form .larga { grid-column: 1 / -2; }
+
+    /* Orçamentos */
+    .dd-tabela { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .dd-tabela th {
+        background: var(--bg-main); text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px;
+        text-transform: uppercase; color: var(--text-secondary); padding: 8px 12px; white-space: nowrap;
+    }
+    .dd-tabela td { padding: 9px 12px; border-top: 1px solid var(--border-light); vertical-align: middle; }
+    .dd-tabela .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .dd-tabela .tam { color: var(--text-muted); font-size: 11.5px; display: block; }
+    .dd-tabela tr.melhor td { background: rgba(45, 138, 78, 0.05); }
+    .dd-tabela tr.edicao td { background: var(--bg-main); padding: 12px; }
+    .dd-tag-melhor {
+        font-size: 10.5px; font-weight: 600; color: var(--success); background: rgba(45, 138, 78, 0.1);
+        border-radius: 999px; padding: 1px 7px; margin-left: 6px; white-space: nowrap;
+    }
+    .dd-obs { color: var(--text-secondary); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dd-acao {
+        width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+        border: none; background: none; border-radius: var(--radius-sm); color: var(--text-muted);
+    }
+    .dd-acao:hover { background: var(--bg-main); color: var(--text-primary); }
+    .dd-vazio { color: var(--text-muted); padding: 14px 16px; }
+
+    /* Negociação */
+    .dd-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .dd-kpi { background: var(--bg-main); border-radius: var(--radius-md); padding: 10px 12px; }
+    .dd-kpi span { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+    .dd-kpi b { font-size: 17px; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+    .dd-kpi.verde b { color: var(--success); }
+
+    /* Pílulas de status / etapa */
+    .dd-pill {
+        display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+        font-size: 12px; font-weight: 600; white-space: nowrap;
+        background: rgba(107,107,107,.08); color: var(--text-secondary);
+    }
+    .dd-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .dd-pill.sm { font-size: 11px; padding: 1px 8px; }
+    .t-ORCAMENTO, .t-REPETICAO, .t-INCLUSAO { background: rgba(59,125,216,.08) !important; color: var(--info) !important; }
+    .t-AMOSTRA    { background: rgba(230,168,23,.12) !important; color: #a87808 !important; }
+    .t-ALTERACAO  { background: rgba(214,110,30,.10) !important; color: #c0621a !important; }
+    .t-LIBERADA   { background: rgba(212,168,67,.14) !important; color: #8a6a1c !important; }
+    .t-APROVADO   { background: rgba(45,138,78,.08) !important; color: var(--success) !important; }
+    .t-CANCELADO  { background: rgba(201,69,62,.08) !important; color: var(--danger) !important; }
+    .t-NEGOCIACAO { background: rgba(107,107,107,.08) !important; color: var(--text-secondary) !important; }
+    .dd-atraso { background: rgba(201,69,62,.08); color: var(--danger); }
+
+    /* Histórico (linha do tempo) */
+    .dd-tl { position: relative; padding-left: 20px; }
+    .dd-tl::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--border); }
+    .dd-ev { position: relative; padding-bottom: 16px; }
+    .dd-ev:last-child { padding-bottom: 0; }
+    .dd-ev::before {
+        content: ""; position: absolute; left: -19px; top: 5px; width: 10px; height: 10px; border-radius: 50%;
+        background: #fff; border: 2px solid var(--accent);
+    }
+    .dd-ev-topo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .dd-ev-data { color: var(--text-muted); font-size: 11.5px; }
+    .dd-ev-info { color: var(--text-secondary); font-size: 12px; margin-top: 3px; }
+    .dd-ev-info.forn { color: var(--text-primary); font-weight: 600; }
+    .dd-ev-info.custo { color: #a87808; font-weight: 600; }
+    .dd-motivo { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; }
+    .dd-motivo.estilo { background: rgba(59,125,216,.1); color: var(--info); }
+    .dd-motivo.forn { background: rgba(230,168,23,.14); color: #8a6408; }
+    .dd-link { color: var(--text-muted); font-size: 11.5px; margin-left: 6px; }
+    .dd-link:hover { color: var(--accent-hover); }
+
+    @media (max-width: 1100px) {
+        .dd-grade { grid-template-columns: minmax(0, 1fr); }
+        .dd-orc-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .dd-orc-form .larga { grid-column: 1 / -1; }
+    }
+    @media (max-width: 700px) {
+        .dd-head { flex-direction: column; }
+        .dd-sys, .dd-etapa, .dd-neg { grid-template-columns: minmax(0, 1fr); }
+        .dd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+</style>
+
+<div class="det-dev">
+    <!-- Cabeçalho -->
+    <div class="dd-head">
         <div>
-            <h2>
-                <span th:text="${dev.codigo}"></span>
-                <span th:class="'badge badge-' + ${dev.status} + ' fs-6 ms-2'" th:text="${dev.status.label}"></span>
-                <span th:if="${atrasado}" class="badge bg-danger ms-1">
-                    <i class="bi bi-clock-history"></i> Atrasado <span th:text="${diasAtraso}"></span>d
+            <div class="dd-titulo">
+                <h1 th:text="${dev.codigo}"></h1>
+                <span th:class="'dd-pill t-' + ${dev.status}" th:text="${dev.status.label}"></span>
+                <span th:if="${atrasado}" class="dd-pill dd-atraso">
+                    Atrasado <span th:text="${diasAtraso}"></span>d
                 </span>
-            </h2>
-            <p class="text-muted mb-0" th:text="${dev.descricao}"></p>
-            <small class="text-muted">
-                <span th:if="${not #lists.isEmpty(dev.marcas)}">Marca(s): <strong th:each="m,s : ${dev.marcas}" th:text="${m.nome + (s.last ? '' : ', ')}"></strong> &nbsp;</span>
-                <span th:if="${dev.colecao}">Coleção: <strong th:text="${dev.colecao.nomeCompleto}"></strong> &nbsp;</span>
-                <span th:if="${dev.categoria}">Categoria: <strong th:text="${dev.categoria.nome}"></strong>
-                    (prazo: <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.)</span>
-                <span th:if="${dev.familia != null}">&nbsp; Família: <strong th:text="${dev.familia}"></strong></span>
-                <span th:if="${dev.precoTarget != null}">&nbsp; Target:
-                    <strong th:text="${'R$ ' + #numbers.formatDecimal(dev.precoTarget, 1, 'POINT', 4, 'COMMA')}"></strong></span>
-                <span th:if="${prazoAmostra != null}">&nbsp; Prazo amostra:
-                    <strong th:text="${#temporals.format(prazoAmostra,'dd/MM/yyyy')}"></strong></span>
-            </small>
-            <small th:if="${dev.codigoSystextil1 != null or dev.codigoSystextil2 != null or dev.codigoSystextil3 != null}"
-                   class="text-muted d-block">
-                Systêxtil:
-                <strong th:if="${dev.codigoSystextil1 != null}" th:text="${dev.codigoSystextil1}"></strong><span th:if="${dev.codigoSystextil1 != null and dev.codigoSystextil2 != null}"> / </span><strong th:if="${dev.codigoSystextil2 != null}" th:text="${dev.codigoSystextil2}"></strong><span th:if="${(dev.codigoSystextil1 != null or dev.codigoSystextil2 != null) and dev.codigoSystextil3 != null}"> / </span><strong th:if="${dev.codigoSystextil3 != null}" th:text="${dev.codigoSystextil3}"></strong>
-            </small>
-        </div>
-        <div class="d-flex gap-2">
-            <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-pencil"></i> Editar
-            </a>
-            <a href="/desenvolvimentos" onclick="if(document.referrer.includes('/desenvolvimentos')){history.back();return false;}" class="btn btn-outline-dark btn-sm">
-                <i class="bi bi-arrow-left"></i> Voltar
-            </a>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- Timeline de Etapas -->
-        <div class="col-md-5">
-            <div class="card shadow-sm h-100">
-                <div class="card-header fw-semibold"><i class="bi bi-clock-history"></i> Histórico de Etapas</div>
-                <div class="card-body p-3">
-                    <div th:if="${#lists.isEmpty(etapas)}" class="text-muted">Nenhuma etapa registrada.</div>
-                    <div class="timeline">
-                        <div th:each="e : ${etapas}" class="d-flex gap-3 mb-3">
-                            <div class="text-center" style="min-width:40px">
-                                <span th:class="'badge rounded-pill badge-' + ${e.tipo}" th:text="${e.tipo.label}"></span>
-                                <div class="text-muted small" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM')}"></div>
-                            </div>
-                            <div>
-                                <div th:if="${e.orcamento != null}" class="small fw-semibold">
-                                    <i class="bi bi-building"></i>
-                                    <span th:text="${e.orcamento.fornecedor ?: '(sem fornecedor)'}"></span>
-                                </div>
-                                <div th:if="${e.tipo.name() == 'ALTERACAO'}" class="small">
-                                    <span th:class="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'badge bg-primary-subtle text-primary-emphasis' : 'badge bg-warning-subtle text-warning-emphasis'"
-                                          th:title="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'Reiniciou o prazo da amostra' : 'Mantém o prazo original da amostra'"
-                                          th:text="${e.motivoAlteracao != null ? e.motivoAlteracao.labelCurto : 'Fornecedor (não informado)'}"></span>
-                                    <a href="#" class="ms-1" data-bs-toggle="collapse"
-                                       th:data-bs-target="'#motivoAlt' + ${e.id}">trocar</a>
-                                    <div th:id="'motivoAlt' + ${e.id}" class="collapse mt-1">
-                                        <form th:action="@{/desenvolvimentos/{id}/etapa/{etapaId}/motivo(id=${dev.id},etapaId=${e.id})}"
-                                              method="post" class="d-flex gap-1">
-                                            <select name="motivoAlteracao" class="form-select form-select-sm">
-                                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"
-                                                        th:selected="${e.motivoAlteracao == m or (e.motivoAlteracao == null and m.name() == 'FORNECEDOR')}"></option>
-                                            </select>
-                                            <button class="btn btn-sm btn-primary">OK</button>
-                                        </form>
-                                    </div>
-                                </div>
-                                <div th:if="${e.observacao}" class="small" th:text="${e.observacao}"></div>
-                                <div th:if="${e.custoAmostra != null}" class="small text-warning fw-semibold">
-                                    Custo: R$ <span th:text="${#numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 4, 'COMMA')}"></span>
-                                </div>
-                                <div th:if="${e.numeroRodada > 1}" class="small text-muted">
-                                    Rodada <span th:text="${e.numeroRodada}"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            </div>
+            <div class="dd-desc" th:text="${dev.descricao}"></div>
+            <div class="dd-chips">
+                <span th:if="${not #lists.isEmpty(dev.marcas)}" class="dd-chip">Marca
+                    <b th:each="m,s : ${dev.marcas}" th:text="${m.nome + (s.last ? '' : ', ')}"></b></span>
+                <span th:if="${dev.colecao}" class="dd-chip">Coleção <b th:text="${dev.colecao.nomeCompleto}"></b></span>
+                <span th:if="${dev.categoria}" class="dd-chip">Subcategoria <b th:text="${dev.categoria.nome}"></b>
+                    · <span th:text="${dev.categoria.prazoDiasUteis}"></span> d.u.</span>
+                <span th:if="${dev.familia != null}" class="dd-chip">Família <b th:text="${dev.familia}"></b></span>
+                <span th:if="${dev.precoTarget != null}" class="dd-chip">Target
+                    <b th:text="${'R$ ' + #numbers.formatDecimal(dev.precoTarget, 1, 'POINT', 4, 'COMMA')}"></b></span>
+                <span th:if="${prazoAmostra != null}" class="dd-chip" th:classappend="${atrasado} ? 'alerta' : ''">Prazo amostra
+                    <b th:text="${#temporals.format(prazoAmostra,'dd/MM/yyyy')}"></b></span>
             </div>
         </div>
+        <div class="dd-acoes">
+            <a th:href="@{/desenvolvimentos/{id}/editar(id=${dev.id})}" class="dd-btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                Editar
+            </a>
+            <a href="/desenvolvimentos" onclick="if(document.referrer.includes('/desenvolvimentos')){history.back();return false;}" class="dd-btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                Voltar
+            </a>
+        </div>
+    </div>
 
-        <!-- Formulário Código Systêxtil + Registrar Etapa + Orçamentos -->
-        <div class="col-md-4">
-            <!-- Código Systêxtil -->
-            <div class="card shadow-sm mb-3">
-                <div class="card-header fw-semibold"><i class="bi bi-upc-scan"></i> Código Systêxtil</div>
-                <div class="card-body">
-                    <form th:action="@{/desenvolvimentos/{id}/systextil(id=${dev.id})}" method="post">
-                        <div class="mb-2">
+    <div class="dd-grade">
+        <!-- Coluna principal -->
+        <div class="dd-col">
+
+            <!-- 1. Código Systêxtil -->
+            <div class="dd-card">
+                <div class="dd-card-h"><h3>Código Systêxtil</h3></div>
+                <div class="dd-card-b">
+                    <form th:action="@{/desenvolvimentos/{id}/systextil(id=${dev.id})}" method="post" class="dd-linha dd-sys">
+                        <div>
+                            <label class="dd-label">Código 1</label>
                             <input type="text" name="codigoSystextil1" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil1}" placeholder="Código 1"/>
+                                   th:value="${dev.codigoSystextil1}"/>
                         </div>
-                        <div class="mb-2">
+                        <div>
+                            <label class="dd-label">Código 2</label>
                             <input type="text" name="codigoSystextil2" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil2}" placeholder="Código 2"/>
+                                   th:value="${dev.codigoSystextil2}"/>
                         </div>
-                        <div class="mb-2">
+                        <div>
+                            <label class="dd-label">Código 3</label>
                             <input type="text" name="codigoSystextil3" class="form-control uppercase-input"
-                                   th:value="${dev.codigoSystextil3}" placeholder="Código 3"/>
+                                   th:value="${dev.codigoSystextil3}"/>
                         </div>
-                        <button class="btn btn-primary w-100">Salvar</button>
+                        <button class="dd-btn-primary">Salvar</button>
                     </form>
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-3">
-                <div class="card-header fw-semibold"><i class="bi bi-arrow-right-circle"></i> Registrar Etapa</div>
-                <div class="card-body">
+            <!-- 2. Registrar etapa -->
+            <div class="dd-card">
+                <div class="dd-card-h"><h3>Registrar etapa</h3></div>
+                <div class="dd-card-b">
                     <form th:action="@{/desenvolvimentos/{id}/avancar(id=${dev.id})}" method="post">
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Tipo</label>
-                            <select name="tipo" class="form-select">
-                                <option value="">-- selecione a etapa --</option>
-                                <option th:each="t : ${tiposEtapa}"
-                                        th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO'}"
-                                        th:value="${t}" th:text="${t.label}"></option>
-                            </select>
-                        </div>
-                        <!-- Campo de fornecedor — aparece só para AMOSTRA, LIBERADA, APROVADO -->
-                        <div class="mb-2" id="campoOrcamento" style="display:none">
-                            <label class="form-label fw-semibold">Fornecedor da Amostra</label>
-                            <select name="orcamentoId" class="form-select form-select-sm">
-                                <option value="">(nenhum)</option>
-                                <option th:each="o : ${orcamentos}"
-                                        th:value="${o.id}"
-                                        th:text="${o.fornecedor != null ? o.fornecedor : '(sem fornecedor)'}">
-                                </option>
-                            </select>
-                        </div>
-                        <!-- Custo da amostra — aparece só para AMOSTRA -->
-                        <div class="mb-2" id="campoCustoAmostra" style="display:none">
-                            <label class="form-label fw-semibold">Custo da Amostra (R$)</label>
-                            <input type="number" name="custoAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
-                        </div>
-                        <!-- Motivo da alteração — aparece só para ALTERACAO -->
-                        <div class="mb-2" id="campoMotivoAlteracao" style="display:none">
-                            <label class="form-label fw-semibold">Motivo da Alteração</label>
-                            <select name="motivoAlteracao" class="form-select">
-                                <option value="">-- selecione o motivo --</option>
-                                <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"></option>
-                            </select>
-                            <div class="form-text">Estilo reinicia o prazo da amostra; divergência do fornecedor mantém o prazo original.</div>
+                        <div class="dd-linha dd-etapa mb-3">
+                            <div>
+                                <label class="dd-label">Tipo</label>
+                                <select name="tipo" class="form-select">
+                                    <option value="">-- selecione a etapa --</option>
+                                    <option th:each="t : ${tiposEtapa}"
+                                            th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO'}"
+                                            th:value="${t}" th:text="${t.label}"></option>
+                                </select>
+                            </div>
+                            <!-- Fornecedor — aparece só para AMOSTRA, LIBERADA, APROVADO -->
+                            <div id="campoOrcamento" style="display:none">
+                                <label class="dd-label">Fornecedor da amostra</label>
+                                <select name="orcamentoId" class="form-select">
+                                    <option value="">(nenhum)</option>
+                                    <option th:each="o : ${orcamentos}"
+                                            th:value="${o.id}"
+                                            th:text="${o.fornecedor != null ? o.fornecedor : '(sem fornecedor)'}">
+                                    </option>
+                                </select>
+                            </div>
+                            <!-- Custo da amostra — aparece só para AMOSTRA -->
+                            <div id="campoCustoAmostra" style="display:none">
+                                <label class="dd-label">Custo da amostra</label>
+                                <input type="number" name="custoAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
+                            </div>
+                            <!-- Motivo da alteração — aparece só para ALTERACAO -->
+                            <div id="campoMotivoAlteracao" style="display:none">
+                                <label class="dd-label">Motivo da alteração</label>
+                                <select name="motivoAlteracao" class="form-select">
+                                    <option value="">-- selecione o motivo --</option>
+                                    <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"></option>
+                                </select>
+                                <div class="form-text">Estilo reinicia o prazo da amostra; divergência do fornecedor mantém o prazo original.</div>
+                            </div>
                         </div>
                         <input type="hidden" name="dataOcorrencia"
                                th:value="${#temporals.format(#temporals.createNow(),'yyyy-MM-dd')}"/>
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold">Observação</label>
+                        <div class="mb-3">
+                            <label class="dd-label">Observação</label>
                             <textarea name="observacao" class="form-control uppercase-input" rows="2"></textarea>
                         </div>
-                        <button class="btn btn-primary w-100">Registrar</button>
+                        <div class="d-flex justify-content-end">
+                            <button class="dd-btn-primary">Registrar etapa</button>
+                        </div>
                     </form>
                 </div>
             </div>
 
-            <!-- Orçamentos -->
-            <div class="card shadow-sm">
-                <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-currency-dollar"></i> Orçamentos</span>
-                    <span class="badge bg-secondary" th:text="${totalOrcamentos} + '/4'"></span>
+            <!-- 3. Orçamentos -->
+            <div class="dd-card">
+                <div class="dd-card-h">
+                    <h3>Orçamentos <span class="dd-contador" th:text="${totalOrcamentos} + ' de 4'"></span></h3>
+                    <button th:if="${totalOrcamentos < 4}" type="button" class="dd-btn-ghost"
+                            data-bs-toggle="collapse" data-bs-target="#formOrc">+ Adicionar orçamento</button>
+                    <span th:if="${totalOrcamentos >= 4}" class="dd-contador">Limite de 4 atingido</span>
                 </div>
-                <div class="card-body p-2">
-                    <div th:if="${#lists.isEmpty(orcamentos)}" class="text-muted small p-2">Nenhum orçamento.</div>
-                    <div th:unless="${#lists.isEmpty(orcamentos)}" class="mb-2">
-                        <div th:each="o : ${orcamentos}"
-                             class="border rounded mb-2 overflow-hidden"
-                             th:classappend="${o.id == menorOrcamentoId} ? ' border-success' : ''">
 
-                            <!-- Header do mini-card -->
-                            <div class="px-2 py-1 d-flex justify-content-between align-items-center"
-                                 th:classappend="${o.id == menorOrcamentoId} ? ' bg-success-subtle' : ' bg-light'">
-                                <span class="fw-semibold small" th:text="${o.fornecedor ?: '(sem fornecedor)'}"></span>
-                                <div class="d-flex gap-1 align-items-center">
-                                    <span th:if="${o.id == menorOrcamentoId}"
-                                          class="badge bg-success" style="font-size:0.65rem">
-                                        <i class="bi bi-star-fill"></i> Melhor
-                                    </span>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1"
-                                            data-bs-toggle="collapse"
-                                            th:data-bs-target="'#editOrc' + ${o.id}">
-                                        <i class="bi bi-pencil" style="font-size:0.7rem"></i>
-                                    </button>
-                                </div>
+                <!-- Novo orçamento -->
+                <div id="formOrc" class="collapse">
+                    <div class="dd-card-b" style="background:var(--bg-main); border-bottom:1px solid var(--border-light)">
+                        <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post" class="dd-linha dd-orc-form">
+                            <div>
+                                <label class="dd-label">Fornecedor</label>
+                                <select name="fornecedor" class="form-select form-select-sm">
+                                    <option value="">(nenhum)</option>
+                                    <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"></option>
+                                </select>
                             </div>
+                            <div><label class="dd-label">Tam. 1</label>
+                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input" placeholder="P, 38..."/></div>
+                            <div><label class="dd-label">Preço 1</label>
+                                <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"/></div>
+                            <div><label class="dd-label">Tam. 2</label>
+                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"/></div>
+                            <div><label class="dd-label">Preço 2</label>
+                                <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"/></div>
+                            <div><label class="dd-label">Tam. 3</label>
+                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"/></div>
+                            <div><label class="dd-label">Preço 3</label>
+                                <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"/></div>
+                            <div><label class="dd-label">Qtd</label>
+                                <input type="number" name="quantidade" class="form-control form-control-sm"/></div>
+                            <div class="larga"><label class="dd-label">Observação</label>
+                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"/></div>
+                            <button class="dd-btn-primary sm">Salvar</button>
+                        </form>
+                    </div>
+                </div>
 
-                            <!-- Corpo: tamanhos e preços -->
-                            <div class="px-2 pt-1">
-                                <div th:if="${o.tamanho != null}" class="d-flex justify-content-between small">
-                                    <span class="text-muted" th:text="${o.tamanho}"></span>
-                                    <span class="fw-semibold"
-                                          th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
-                                </div>
-                                <div th:if="${o.tamanho2 != null}" class="d-flex justify-content-between small">
-                                    <span class="text-muted" th:text="${o.tamanho2}"></span>
-                                    <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
-                                </div>
-                                <div th:if="${o.tamanho3 != null}" class="d-flex justify-content-between small">
-                                    <span class="text-muted" th:text="${o.tamanho3}"></span>
-                                    <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
-                                </div>
+                <div th:if="${#lists.isEmpty(orcamentos)}" class="dd-vazio">Nenhum orçamento cadastrado.</div>
+                <div th:unless="${#lists.isEmpty(orcamentos)}" style="overflow-x:auto">
+                    <table class="dd-tabela">
+                        <thead>
+                            <tr>
+                                <th>Fornecedor</th>
+                                <th class="num">Tamanho 1</th>
+                                <th class="num">Tamanho 2</th>
+                                <th class="num">Tamanho 3</th>
+                                <th class="num">Qtd</th>
+                                <th>Observação</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <th:block th:each="o : ${orcamentos}">
+                                <tr th:classappend="${o.id == menorOrcamentoId} ? 'melhor' : ''">
+                                    <td>
+                                        <b th:text="${o.fornecedor ?: '(sem fornecedor)'}"></b>
+                                        <span th:if="${o.id == menorOrcamentoId}" class="dd-tag-melhor">★ Melhor</span>
+                                    </td>
+                                    <td class="num">
+                                        <span class="tam" th:text="${o.tamanho ?: '-'}"></span>
+                                        <b th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 4, 'COMMA') : '-'}"></b>
+                                    </td>
+                                    <td class="num">
+                                        <span class="tam" th:text="${o.tamanho2 ?: '-'}"></span>
+                                        <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
+                                    </td>
+                                    <td class="num">
+                                        <span class="tam" th:text="${o.tamanho3 ?: '-'}"></span>
+                                        <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
+                                    </td>
+                                    <td class="num" th:text="${o.quantidade ?: '-'}"></td>
+                                    <td class="dd-obs" th:text="${o.observacao}" th:title="${o.observacao}"></td>
+                                    <td style="width:1%">
+                                        <button type="button" class="dd-acao" title="Editar orçamento"
+                                                data-bs-toggle="collapse" th:data-bs-target="'#editOrc' + ${o.id}">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr th:id="'editOrc' + ${o.id}" class="collapse edicao">
+                                    <td colspan="7">
+                                        <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
+                                              method="post" class="dd-linha dd-orc-form">
+                                            <div>
+                                                <label class="dd-label">Fornecedor</label>
+                                                <select name="fornecedor" class="form-select form-select-sm">
+                                                    <option value="">(nenhum)</option>
+                                                    <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"
+                                                            th:selected="${f.nome == o.fornecedor}"></option>
+                                                </select>
+                                            </div>
+                                            <div><label class="dd-label">Tam. 1</label>
+                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho}"/></div>
+                                            <div><label class="dd-label">Preço 1</label>
+                                                <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor}"/></div>
+                                            <div><label class="dd-label">Tam. 2</label>
+                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho2}"/></div>
+                                            <div><label class="dd-label">Preço 2</label>
+                                                <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor2}"/></div>
+                                            <div><label class="dd-label">Tam. 3</label>
+                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho3}"/></div>
+                                            <div><label class="dd-label">Preço 3</label>
+                                                <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor3}"/></div>
+                                            <div><label class="dd-label">Qtd</label>
+                                                <input type="number" name="quantidade" class="form-control form-control-sm" th:value="${o.quantidade}"/></div>
+                                            <div class="larga"><label class="dd-label">Observação</label>
+                                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input" th:value="${o.observacao}"/></div>
+                                            <button class="dd-btn-primary sm">Salvar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </th:block>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. Negociação -->
+            <div class="dd-card">
+                <div class="dd-card-h"><h3>Negociação</h3></div>
+                <div class="dd-card-b">
+                    <div class="dd-kpis">
+                        <div class="dd-kpi"><span>Preço inicial</span><b id="negKpiInicial">—</b></div>
+                        <div class="dd-kpi"><span>Preço final</span><b id="negKpiFinal">—</b></div>
+                        <div class="dd-kpi verde"><span>% Desconto</span><b id="negDesconto">—</b></div>
+                        <div class="dd-kpi"><span>Valor total reduzido</span><b id="negTotalReduzido">—</b></div>
+                    </div>
+                    <form th:action="@{/desenvolvimentos/{id}/negociacao(id=${dev.id})}" method="post" class="dd-linha dd-neg">
+                        <div>
+                            <label class="dd-label">Preço inicial</label>
+                            <input type="number" name="precoInicial" id="negPrecoInicial"
+                                   step="0.0001" class="input-reais form-control"
+                                   th:value="${dev.precoInicial != null ? dev.precoInicial : precoInicialSugerido}"
+                                   placeholder="0,0000"/>
+                        </div>
+                        <div>
+                            <label class="dd-label">Preço final</label>
+                            <input type="number" name="precoFinal" id="negPrecoFinal"
+                                   step="0.0001" class="input-reais form-control"
+                                   th:value="${dev.precoFinal}"
+                                   placeholder="0,0000"/>
+                        </div>
+                        <div>
+                            <label class="dd-label">Qtd compra mostruário</label>
+                            <input type="number" name="qtdCompraMostruario" id="negQtd"
+                                   min="0" class="form-control"
+                                   th:value="${dev.qtdCompraMostruario}"
+                                   placeholder="0"/>
+                        </div>
+                        <button class="dd-btn-primary">Salvar negociação</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna direita: histórico -->
+        <div class="dd-col">
+            <div class="dd-card">
+                <div class="dd-card-h">
+                    <h3>Histórico de etapas</h3>
+                    <span class="dd-contador" th:text="${#lists.size(etapas)} + ' etapa(s)'"></span>
+                </div>
+                <div class="dd-card-b">
+                    <div th:if="${#lists.isEmpty(etapas)}" class="text-muted">Nenhuma etapa registrada.</div>
+                    <div class="dd-tl" th:unless="${#lists.isEmpty(etapas)}">
+                        <div th:each="e : ${etapas}" class="dd-ev">
+                            <div class="dd-ev-topo">
+                                <span th:class="'dd-pill sm t-' + ${e.tipo}" th:text="${e.tipo.label}"></span>
+                                <span class="dd-ev-data" th:text="${#temporals.format(e.dataOcorrencia,'dd/MM/yyyy')}"></span>
+                                <span th:if="${e.numeroRodada > 1}" class="dd-ev-data">· rodada <span th:text="${e.numeroRodada}"></span></span>
                             </div>
-
-                            <!-- Rodapé: qtd e observação -->
-                            <div th:if="${o.quantidade != null or (o.observacao != null and !o.observacao.isEmpty())}"
-                                 class="px-2 pb-1 pt-0 d-flex gap-2 small text-muted">
-                                <span th:if="${o.quantidade != null}">Qtd: <strong th:text="${o.quantidade}"></strong></span>
-                                <span th:if="${o.observacao != null and !o.observacao.isEmpty()}"
-                                      class="text-truncate" th:text="${o.observacao}"></span>
-                            </div>
-
-                            <!-- Collapse de edição -->
-                            <div th:id="'editOrc' + ${o.id}" class="collapse border-top">
-                                <div class="p-2 bg-light">
-                                    <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
-                                          method="post" class="row g-1">
-                                        <div class="col-12">
-                                            <select name="fornecedor" class="form-select form-select-sm">
-                                                <option value="">(nenhum)</option>
-                                                <option th:each="f : ${fornecedores}"
-                                                        th:value="${f.nome}"
-                                                        th:text="${f.nome}"
-                                                        th:selected="${f.nome == o.fornecedor}">
-                                                </option>
-                                            </select>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
-                                                   th:value="${o.tamanho}" placeholder="Tam. 1"/>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"
-                                                   th:value="${o.valor}" placeholder="Preço T1"/>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
-                                                   th:value="${o.tamanho2}" placeholder="Tam. 2"/>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"
-                                                   th:value="${o.valor2}" placeholder="Preço T2"/>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
-                                                   th:value="${o.tamanho3}" placeholder="Tam. 3"/>
-                                        </div>
-                                        <div class="col-6">
-                                            <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"
-                                                   th:value="${o.valor3}" placeholder="Preço T3"/>
-                                        </div>
-                                        <div class="col-12">
-                                            <input type="number" name="quantidade" class="form-control form-control-sm"
-                                                   th:value="${o.quantidade}" placeholder="Qtd"/>
-                                        </div>
-                                        <div class="col-12">
-                                            <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
-                                                   th:value="${o.observacao}" placeholder="Observação"/>
-                                        </div>
-                                        <div class="col-12">
-                                            <button class="btn btn-sm btn-primary w-100">Salvar</button>
-                                        </div>
+                            <div th:if="${e.orcamento != null}" class="dd-ev-info forn"
+                                 th:text="${e.orcamento.fornecedor ?: '(sem fornecedor)'}"></div>
+                            <div th:if="${e.tipo.name() == 'ALTERACAO'}" class="dd-ev-info">
+                                <span th:class="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'dd-motivo estilo' : 'dd-motivo forn'"
+                                      th:title="${e.motivoAlteracao != null and e.motivoAlteracao.name() == 'ESTILO'} ? 'Reiniciou o prazo da amostra' : 'Mantém o prazo original da amostra'"
+                                      th:text="${e.motivoAlteracao != null ? e.motivoAlteracao.labelCurto : 'Fornecedor (não informado)'}"></span>
+                                <a href="#" class="dd-link" data-bs-toggle="collapse"
+                                   th:data-bs-target="'#motivoAlt' + ${e.id}">trocar</a>
+                                <div th:id="'motivoAlt' + ${e.id}" class="collapse mt-1">
+                                    <form th:action="@{/desenvolvimentos/{id}/etapa/{etapaId}/motivo(id=${dev.id},etapaId=${e.id})}"
+                                          method="post" class="d-flex gap-1">
+                                        <select name="motivoAlteracao" class="form-select form-select-sm">
+                                            <option th:each="m : ${motivosAlteracao}" th:value="${m}" th:text="${m.label}"
+                                                    th:selected="${e.motivoAlteracao == m or (e.motivoAlteracao == null and m.name() == 'FORNECEDOR')}"></option>
+                                        </select>
+                                        <button class="dd-btn-primary sm">OK</button>
                                     </form>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div th:if="${totalOrcamentos < 4}">
-                        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="collapse"
-                                data-bs-target="#formOrc">
-                            <i class="bi bi-plus"></i> Adicionar Orçamento
-                        </button>
-                        <div id="formOrc" class="collapse mt-2">
-                            <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post">
-                                <div class="row g-1">
-                                    <div class="col-12">
-                                        <select name="fornecedor" class="form-select form-select-sm">
-                                            <option value="">(nenhum)</option>
-                                            <option th:each="f : ${fornecedores}"
-                                                    th:value="${f.nome}"
-                                                    th:text="${f.nome}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input"
-                                               placeholder="Tam. 1 (P, 38...)"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"
-                                               placeholder="Preço T1"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"
-                                               placeholder="Tam. 2"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"
-                                               placeholder="Preço T2"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"
-                                               placeholder="Tam. 3"/>
-                                    </div>
-                                    <div class="col-6">
-                                        <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"
-                                               placeholder="Preço T3"/>
-                                    </div>
-                                    <div class="col-12">
-                                        <input type="number" name="quantidade" class="form-control form-control-sm"
-                                               placeholder="Qtd"/>
-                                    </div>
-                                    <div class="col-12">
-                                        <textarea name="observacao" class="form-control form-control-sm uppercase-input"
-                                                  rows="2" placeholder="Observação"></textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <button class="btn btn-sm btn-primary w-100">Salvar</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div th:if="${totalOrcamentos >= 4}" class="text-muted small p-2 text-center">
-                        <i class="bi bi-info-circle"></i> Limite de 4 orçamentos atingido.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Negociação -->
-    <div class="row g-4 mt-0">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header fw-semibold"><i class="bi bi-percent"></i> Negociação</div>
-                <div class="card-body">
-                    <form th:action="@{/desenvolvimentos/{id}/negociacao(id=${dev.id})}" method="post">
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small">Preço Inicial (R$)</label>
-                                <input type="number" name="precoInicial" id="negPrecoInicial"
-                                       step="0.0001" class="input-reais form-control"
-                                       th:value="${dev.precoInicial != null ? dev.precoInicial : precoInicialSugerido}"
-                                       placeholder="0,0000"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small">Preço Final (R$)</label>
-                                <input type="number" name="precoFinal" id="negPrecoFinal"
-                                       step="0.0001" class="input-reais form-control"
-                                       th:value="${dev.precoFinal}"
-                                       placeholder="0,0000"/>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold small">Qtd Compra Mostruário</label>
-                                <input type="number" name="qtdCompraMostruario" id="negQtd"
-                                       min="0" class="form-control"
-                                       th:value="${dev.qtdCompraMostruario}"
-                                       placeholder="0"/>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary btn-sm w-100">Salvar Negociação</button>
-                    </form>
-
-                    <!-- Resultados (calculados via JS em tempo real) -->
-                    <div id="negPreview" class="mt-3 border-top pt-3" style="display:none">
-                        <div class="row text-center g-2">
-                            <div class="col-6">
-                                <div class="bg-success-subtle rounded p-2">
-                                    <div class="small text-muted">% Desconto</div>
-                                    <div class="fw-bold fs-5 text-success" id="negDesconto">—</div>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="bg-info-subtle rounded p-2">
-                                    <div class="small text-muted">Valor Total Reduzido</div>
-                                    <div class="fw-bold fs-5 text-info" id="negTotalReduzido">—</div>
-                                </div>
-                            </div>
+                            <div th:if="${e.custoAmostra != null}" class="dd-ev-info custo"
+                                 th:text="${'Custo: R$ ' + #numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 4, 'COMMA')}"></div>
+                            <div th:if="${e.observacao}" class="dd-ev-info" th:text="${e.observacao}"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-    (function () {
-        const tiposComOrc = ['AMOSTRA', 'LIBERADA', 'APROVADO'];
-        const tipoSelect  = document.querySelector('select[name="tipo"]');
-        const campoOrc    = document.getElementById('campoOrcamento');
-        const campoCusto  = document.getElementById('campoCustoAmostra');
-        const campoMotivo = document.getElementById('campoMotivoAlteracao');
-        const selMotivo   = campoMotivo.querySelector('select');
-        function atualizar() {
-            campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
-            campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
-            const isAlt = tipoSelect.value === 'ALTERACAO';
-            campoMotivo.style.display = isAlt ? '' : 'none';
-            selMotivo.required = isAlt;
-        }
-        tipoSelect.addEventListener('change', atualizar);
-        atualizar();
-    }());
+<script>
+(function () {
+    const tiposComOrc = ['AMOSTRA', 'LIBERADA', 'APROVADO'];
+    const tipoSelect  = document.querySelector('select[name="tipo"]');
+    const campoOrc    = document.getElementById('campoOrcamento');
+    const campoCusto  = document.getElementById('campoCustoAmostra');
+    const campoMotivo = document.getElementById('campoMotivoAlteracao');
+    const selMotivo   = campoMotivo.querySelector('select');
+    function atualizar() {
+        campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
+        campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
+        const isAlt = tipoSelect.value === 'ALTERACAO';
+        campoMotivo.style.display = isAlt ? '' : 'none';
+        selMotivo.required = isAlt;
+    }
+    tipoSelect.addEventListener('change', atualizar);
+    atualizar();
+}());
 
-    (function () {
-        const fmtBR = v => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        const elInicial = document.getElementById('negPrecoInicial');
-        const elFinal   = document.getElementById('negPrecoFinal');
-        const elQtd     = document.getElementById('negQtd');
-        const elPreview = document.getElementById('negPreview');
-        const elDesc    = document.getElementById('negDesconto');
-        const elTotal   = document.getElementById('negTotalReduzido');
+// Negociação: indicadores calculados em tempo real
+(function () {
+    const fmtPct  = v => v.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const fmtReal = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits: 4, maximumFractionDigits: 4});
+    const elInicial = document.getElementById('negPrecoInicial');
+    const elFinal   = document.getElementById('negPrecoFinal');
+    const elQtd     = document.getElementById('negQtd');
+    const kIni   = document.getElementById('negKpiInicial');
+    const kFin   = document.getElementById('negKpiFinal');
+    const elDesc = document.getElementById('negDesconto');
+    const elTotal = document.getElementById('negTotalReduzido');
 
-        function calcular() {
-            const ini = parseFloat(elInicial.value);
-            const fin = parseFloat(elFinal.value);
-            const qtd = parseInt(elQtd.value);
-            if (!ini || ini <= 0 || isNaN(fin)) { elPreview.style.display = 'none'; return; }
-            const pct = ((ini - fin) / ini) * 100;
-            elDesc.textContent = fmtBR(pct) + '%';
-            elTotal.textContent = (!isNaN(qtd) && qtd > 0)
-                ? 'R$ ' + ((ini - fin) * qtd).toLocaleString('pt-BR', {minimumFractionDigits: 4, maximumFractionDigits: 4})
-                : '—';
-            elPreview.style.display = '';
-        }
+    function calcular() {
+        const ini = parseFloat(elInicial.value);
+        const fin = parseFloat(elFinal.value);
+        const qtd = parseInt(elQtd.value);
+        kIni.textContent = !isNaN(ini) ? fmtReal(ini) : '—';
+        kFin.textContent = !isNaN(fin) ? fmtReal(fin) : '—';
+        if (!ini || ini <= 0 || isNaN(fin)) { elDesc.textContent = '—'; elTotal.textContent = '—'; return; }
+        elDesc.textContent = fmtPct(((ini - fin) / ini) * 100) + '%';
+        elTotal.textContent = (!isNaN(qtd) && qtd > 0) ? fmtReal((ini - fin) * qtd) : '—';
+    }
 
-        elInicial.addEventListener('input', calcular);
-        elFinal.addEventListener('input', calcular);
-        elQtd.addEventListener('input', calcular);
-        calcular();
-    }());
-    </script>
+    [elInicial, elFinal, elQtd].forEach(el => { el.addEventListener('input', calcular); el.addEventListener('change', calcular); });
+    calcular();
+}());
+</script>
 </main>
 </body>
 </html>
