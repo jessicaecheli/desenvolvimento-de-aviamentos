@@ -312,6 +312,11 @@ public class DesenvolvimentoController {
             ra.addFlashAttribute("erro", "Informe o motivo da alteração (estilo ou divergência do fornecedor).");
             return "redirect:/desenvolvimentos/" + id;
         }
+        // Aviamento: o custo da amostra é informado quando a amostra é recebida (etapa Ag. Aprovação)
+        if (tipo == TipoEtapa.LIBERADA && custoAmostra == null && !service.isTecido(service.buscarPorId(id))) {
+            ra.addFlashAttribute("erro", "Informe o custo da amostra recebida.");
+            return "redirect:/desenvolvimentos/" + id;
+        }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
         service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra,
                 nf, valorFrete, valorAmostra, observacoesFaturamento, motivoAlteracao);
@@ -326,6 +331,20 @@ public class DesenvolvimentoController {
                                           RedirectAttributes ra) {
         service.alterarMotivoAlteracao(id, etapaId, motivoAlteracao);
         ra.addFlashAttribute("sucesso", "Motivo da alteração atualizado: " + motivoAlteracao.getLabel() + ".");
+        return "redirect:/desenvolvimentos/" + id;
+    }
+
+    @PostMapping("/{id}/etapa/{etapaId}/custo")
+    public String corrigirCustoAmostra(@PathVariable Long id,
+                                        @PathVariable Long etapaId,
+                                        @RequestParam(required = false) BigDecimal custoAmostra,
+                                        RedirectAttributes ra) {
+        try {
+            service.corrigirCustoAmostra(id, etapaId, custoAmostra);
+            ra.addFlashAttribute("sucesso", "Custo da amostra corrigido.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
+        }
         return "redirect:/desenvolvimentos/" + id;
     }
 

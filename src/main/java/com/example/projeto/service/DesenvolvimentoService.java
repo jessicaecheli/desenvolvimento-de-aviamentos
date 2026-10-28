@@ -86,7 +86,7 @@ public class DesenvolvimentoService {
         etapa.setObservacao(observacao);
         etapa.setDataOcorrencia(dataOcorrencia != null ? dataOcorrencia : LocalDate.now());
         etapa.setOrcamento(orcamento);
-        if (tipo == TipoEtapa.AMOSTRA && custoAmostra != null) {
+        if (tipo == TipoEtapa.LIBERADA && custoAmostra != null) {   // custo informado ao receber a amostra
             etapa.setCustoAmostra(custoAmostra);
         }
         etapa.setNf(nf);
@@ -122,6 +122,36 @@ public class DesenvolvimentoService {
             .orElseThrow(() -> new IllegalArgumentException("Etapa de alteração não encontrada."));
         etapa.setMotivoAlteracao(motivo);
         etapaRepository.save(etapa);
+    }
+
+    /**
+     * Corrige o custo da amostra de uma etapa (Ag. Aprovação ou etapa antiga que já tinha custo).
+     * A correção fica anotada na observação da própria etapa, sem criar nova etapa,
+     * para o card "Custo Amostras" somar só o valor correto.
+     */
+    @Transactional
+    public void corrigirCustoAmostra(Long devId, Long etapaId, java.math.BigDecimal novoCusto) {
+        if (novoCusto == null || novoCusto.signum() < 0) {
+            throw new IllegalArgumentException("Informe um custo válido (zero ou maior).");
+        }
+        EtapaDesenvolvimento etapa = etapaRepository.findById(etapaId)
+            .filter(e -> e.getDesenvolvimento().getId().equals(devId)
+                && (e.getTipo() == TipoEtapa.LIBERADA || e.getCustoAmostra() != null))
+            .orElseThrow(() -> new IllegalArgumentException("Etapa não encontrada para correção de custo."));
+        java.math.BigDecimal anterior = etapa.getCustoAmostra();
+        if (anterior != null && anterior.compareTo(novoCusto) == 0) return;
+
+        String registro = "CUSTO CORRIGIDO DE " + formatarReais(anterior) + " PARA " + formatarReais(novoCusto)
+            + " EM " + LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String obs = etapa.getObservacao() == null || etapa.getObservacao().isBlank()
+            ? registro : etapa.getObservacao() + " | " + registro;
+        etapa.setObservacao(obs.length() <= 255 ? obs : "..." + obs.substring(obs.length() - 252));
+        etapa.setCustoAmostra(novoCusto);
+        etapaRepository.save(etapa);
+    }
+
+    private static String formatarReais(java.math.BigDecimal v) {
+        return v == null ? "(sem custo)" : "R$ " + String.format("%.4f", v).replace('.', ',');
     }
 
     /**

@@ -300,9 +300,9 @@
                                     </option>
                                 </select>
                             </div>
-                            <!-- Custo da amostra — aparece só para AMOSTRA -->
+                            <!-- Custo da amostra recebida — aparece e é obrigatório só para LIBERADA (Ag. Aprovação) -->
                             <div id="campoCustoAmostra" style="display:none">
-                                <label class="dd-label">Custo da amostra</label>
+                                <label class="dd-label">Custo da amostra recebida *</label>
                                 <input type="number" name="custoAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
                             </div>
                             <!-- Motivo da alteração — aparece só para ALTERACAO -->
@@ -516,8 +516,19 @@
                                     </form>
                                 </div>
                             </div>
-                            <div th:if="${e.custoAmostra != null}" class="dd-ev-info custo"
-                                 th:text="${'Custo: R$ ' + #numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 4, 'COMMA')}"></div>
+                            <div th:if="${e.custoAmostra != null or e.tipo.name() == 'LIBERADA'}" class="dd-ev-info custo">
+                                <span th:text="${e.custoAmostra != null ? 'Custo: R$ ' + #numbers.formatDecimal(e.custoAmostra, 1, 'POINT', 4, 'COMMA') : 'Custo: não informado'}"></span>
+                                <a href="#" class="dd-link" data-bs-toggle="collapse"
+                                   th:data-bs-target="'#custoEt' + ${e.id}">corrigir</a>
+                                <div th:id="'custoEt' + ${e.id}" class="collapse mt-1">
+                                    <form th:action="@{/desenvolvimentos/{id}/etapa/{etapaId}/custo(id=${dev.id},etapaId=${e.id})}"
+                                          method="post" class="d-flex gap-1">
+                                        <input type="number" name="custoAmostra" step="0.0001" min="0" required
+                                               class="input-reais form-control form-control-sm" th:value="${e.custoAmostra}"/>
+                                        <button class="dd-btn-primary sm">OK</button>
+                                    </form>
+                                </div>
+                            </div>
                             <div th:if="${e.observacao}" class="dd-ev-info" th:text="${e.observacao}"></div>
                         </div>
                     </div>
@@ -537,7 +548,9 @@
     const selMotivo   = campoMotivo.querySelector('select');
     function atualizar() {
         campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
-        campoCusto.style.display = tipoSelect.value === 'AMOSTRA' ? '' : 'none';
+        const isLib = tipoSelect.value === 'LIBERADA';
+        campoCusto.style.display = isLib ? '' : 'none';
+        campoCusto.querySelector('input').required = isLib;
         const isAlt = tipoSelect.value === 'ALTERACAO';
         campoMotivo.style.display = isAlt ? '' : 'none';
         selMotivo.required = isAlt;
