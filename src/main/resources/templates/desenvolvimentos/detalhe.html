@@ -99,30 +99,59 @@
     .dd-sys { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
     .dd-etapa { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .dd-neg { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
-    .dd-orc-form { grid-template-columns: 2fr repeat(6, minmax(0, 1fr)); }
-    .dd-orc-form .larga { grid-column: 1 / -2; }
+    .dd-orc-topo { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); margin-bottom: 14px; }
 
-    /* Orçamentos */
+    /* Orçamentos: um bloco por fornecedor com a grade de preços */
+    .dd-orc { border-top: 1px solid var(--border-light); }
+    .dd-orc:first-of-type { border-top: none; }
+    .dd-orc.melhor { background: rgba(45, 138, 78, 0.035); }
+    .dd-orc-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px 4px; }
+    .dd-orc-titulo { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+    .dd-orc-obs { color: var(--text-muted); font-size: 12px; max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dd-orc .dd-tabela { margin-bottom: 10px; }
+    .dd-orc-edicao { background: var(--bg-main); border-top: 1px solid var(--border-light); padding: 14px 16px; }
+    .dd-orc-rodape { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
     .dd-tabela { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     .dd-tabela th {
-        background: var(--bg-main); text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px;
-        text-transform: uppercase; color: var(--text-secondary); padding: 8px 12px; white-space: nowrap;
+        text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px;
+        text-transform: uppercase; color: var(--text-muted); padding: 6px 16px; white-space: nowrap;
+        border-bottom: 1px solid var(--border-light);
     }
-    .dd-tabela td { padding: 9px 12px; border-top: 1px solid var(--border-light); vertical-align: middle; }
+    .dd-tabela td { padding: 7px 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+    .dd-tabela tr:last-child td { border-bottom: none; }
     .dd-tabela .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .dd-tabela .tam { color: var(--text-muted); font-size: 11.5px; display: block; }
-    .dd-tabela tr.melhor td { background: rgba(45, 138, 78, 0.05); }
-    .dd-tabela tr.edicao td { background: var(--bg-main); padding: 12px; }
     .dd-tag-melhor {
         font-size: 10.5px; font-weight: 600; color: var(--success); background: rgba(45, 138, 78, 0.1);
-        border-radius: 999px; padding: 1px 7px; margin-left: 6px; white-space: nowrap;
+        border-radius: 999px; padding: 1px 7px; white-space: nowrap;
     }
-    .dd-obs { color: var(--text-secondary); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Editor da grade de preços */
+    .dd-grade-precos { overflow-x: auto; }
+    .dd-grade-ed { border-collapse: separate; border-spacing: 0 6px; margin: 0; }
+    .dd-grade-ed th, .dd-grade-ed td { padding-right: 8px; }
+    .dd-grade-ed input::placeholder { text-transform: none; }
+    .dd-grade-ed th { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; text-align: left; padding: 0 2px; white-space: nowrap; }
+    .dd-grade-ed td { min-width: 140px; vertical-align: middle; }
+    .dd-grade-ed td.faixa { min-width: 150px; }
+    .dd-grade-ed td.ctrl, .dd-grade-ed th.ctrl { min-width: 0; width: 1%; }
+    .dd-grade-ed .canto { color: var(--text-muted); font-size: 11.5px; }
+    .dd-grade-ed input.form-control { background-color: #fff; }
+    .dd-grade-ed .num input { text-align: right; }
+    .dd-add {
+        background: none; border: 1px dashed var(--border); color: var(--text-secondary); border-radius: var(--radius-sm);
+        padding: 6px 10px; font-family: inherit; font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .dd-add:hover { border-color: var(--accent); color: var(--text-primary); }
+    .dd-rem { border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: var(--radius-sm); }
+    .dd-rem:hover { background: rgba(201,69,62,.08); color: var(--danger); }
+    .dd-grade-ajuda { color: var(--text-muted); font-size: 11.5px; margin-top: 8px; }
     .dd-acao {
         width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
         border: none; background: none; border-radius: var(--radius-sm); color: var(--text-muted);
     }
     .dd-acao:hover { background: var(--bg-main); color: var(--text-primary); }
+    .dd-acao.perigo:hover { background: rgba(201, 69, 62, 0.08); color: var(--danger); }
     .dd-vazio { color: var(--text-muted); padding: 14px 16px; }
 
     /* Negociação */
@@ -171,12 +200,10 @@
 
     @media (max-width: 1100px) {
         .dd-grade { grid-template-columns: minmax(0, 1fr); }
-        .dd-orc-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .dd-orc-form .larga { grid-column: 1 / -1; }
     }
     @media (max-width: 700px) {
         .dd-head { flex-direction: column; }
-        .dd-sys, .dd-etapa, .dd-neg { grid-template-columns: minmax(0, 1fr); }
+        .dd-sys, .dd-etapa, .dd-neg, .dd-orc-topo { grid-template-columns: minmax(0, 1fr); }
         .dd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 </style>
@@ -258,7 +285,7 @@
                                 <select name="tipo" class="form-select">
                                     <option value="">-- selecione a etapa --</option>
                                     <option th:each="t : ${tiposEtapa}"
-                                            th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO'}"
+                                            th:if="${t.name() != 'INCLUSAO' and t.name() != 'NEGOCIACAO' and t.name() != 'REPETICAO'}"
                                             th:value="${t}" th:text="${t.label}"></option>
                                 </select>
                             </div>
@@ -301,7 +328,7 @@
                 </div>
             </div>
 
-            <!-- 3. Orçamentos -->
+            <!-- 3. Orçamentos (grade de preços: tamanhos × faixas de quantidade) -->
             <div class="dd-card">
                 <div class="dd-card-h">
                     <h3>Orçamentos <span class="dd-contador" th:text="${totalOrcamentos} + ' de 4'"></span></h3>
@@ -312,113 +339,107 @@
 
                 <!-- Novo orçamento -->
                 <div id="formOrc" class="collapse">
-                    <div class="dd-card-b" style="background:var(--bg-main); border-bottom:1px solid var(--border-light)">
-                        <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post" class="dd-linha dd-orc-form">
-                            <div>
-                                <label class="dd-label">Fornecedor</label>
-                                <select name="fornecedor" class="form-select form-select-sm">
-                                    <option value="">(nenhum)</option>
-                                    <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"></option>
-                                </select>
+                    <div class="dd-orc-edicao">
+                        <form th:action="@{/desenvolvimentos/{id}/orcamento(id=${dev.id})}" method="post">
+                            <div class="dd-linha dd-orc-topo">
+                                <div>
+                                    <label class="dd-label">Fornecedor</label>
+                                    <select name="fornecedor" class="form-select form-select-sm">
+                                        <option value="">(nenhum)</option>
+                                        <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"></option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="dd-label">Observação</label>
+                                    <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"/>
+                                </div>
                             </div>
-                            <div><label class="dd-label">Tam. 1</label>
-                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input" placeholder="P, 38..."/></div>
-                            <div><label class="dd-label">Preço 1</label>
-                                <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm"/></div>
-                            <div><label class="dd-label">Tam. 2</label>
-                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input"/></div>
-                            <div><label class="dd-label">Preço 2</label>
-                                <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm"/></div>
-                            <div><label class="dd-label">Tam. 3</label>
-                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input"/></div>
-                            <div><label class="dd-label">Preço 3</label>
-                                <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm"/></div>
-                            <div><label class="dd-label">Qtd</label>
-                                <input type="number" name="quantidade" class="form-control form-control-sm"/></div>
-                            <div class="larga"><label class="dd-label">Observação</label>
-                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"/></div>
-                            <button class="dd-btn-primary sm">Salvar</button>
+                            <div class="dd-grade-precos" data-grade></div>
+                            <div class="dd-orc-rodape">
+                                <button type="button" class="dd-btn-ghost" data-bs-toggle="collapse" data-bs-target="#formOrc">Cancelar</button>
+                                <button class="dd-btn-primary sm">Salvar orçamento</button>
+                            </div>
                         </form>
                     </div>
                 </div>
 
                 <div th:if="${#lists.isEmpty(orcamentos)}" class="dd-vazio">Nenhum orçamento cadastrado.</div>
-                <div th:unless="${#lists.isEmpty(orcamentos)}" style="overflow-x:auto">
-                    <table class="dd-tabela">
-                        <thead>
-                            <tr>
-                                <th>Fornecedor</th>
-                                <th class="num">Tamanho 1</th>
-                                <th class="num">Tamanho 2</th>
-                                <th class="num">Tamanho 3</th>
-                                <th class="num">Qtd</th>
-                                <th>Observação</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <th:block th:each="o : ${orcamentos}">
-                                <tr th:classappend="${o.id == menorOrcamentoId} ? 'melhor' : ''">
-                                    <td>
-                                        <b th:text="${o.fornecedor ?: '(sem fornecedor)'}"></b>
-                                        <span th:if="${o.id == menorOrcamentoId}" class="dd-tag-melhor">★ Melhor</span>
-                                    </td>
-                                    <td class="num">
-                                        <span class="tam" th:text="${o.tamanho ?: '-'}"></span>
-                                        <b th:text="${o.valor != null ? 'R$ ' + #numbers.formatDecimal(o.valor, 1, 'POINT', 4, 'COMMA') : '-'}"></b>
-                                    </td>
-                                    <td class="num">
-                                        <span class="tam" th:text="${o.tamanho2 ?: '-'}"></span>
-                                        <span th:text="${o.valor2 != null ? 'R$ ' + #numbers.formatDecimal(o.valor2, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
-                                    </td>
-                                    <td class="num">
-                                        <span class="tam" th:text="${o.tamanho3 ?: '-'}"></span>
-                                        <span th:text="${o.valor3 != null ? 'R$ ' + #numbers.formatDecimal(o.valor3, 1, 'POINT', 4, 'COMMA') : '-'}"></span>
-                                    </td>
-                                    <td class="num" th:text="${o.quantidade ?: '-'}"></td>
-                                    <td class="dd-obs" th:text="${o.observacao}" th:title="${o.observacao}"></td>
-                                    <td style="width:1%">
-                                        <button type="button" class="dd-acao" title="Editar orçamento"
-                                                data-bs-toggle="collapse" th:data-bs-target="'#editOrc' + ${o.id}">
-                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-                                        </button>
-                                    </td>
+
+                <div th:each="o : ${orcamentos}" class="dd-orc" th:classappend="${o.id == menorOrcamentoId} ? 'melhor' : ''">
+                    <div class="dd-orc-h">
+                        <div class="dd-orc-titulo">
+                            <b th:text="${o.fornecedor ?: '(sem fornecedor)'}"></b>
+                            <span th:if="${o.id == menorOrcamentoId}" class="dd-tag-melhor"
+                                  title="Menor preço na menor faixa de quantidade">★ Melhor</span>
+                            <span th:if="${o.observacao != null and !o.observacao.isEmpty()}" class="dd-orc-obs"
+                                  th:text="${o.observacao}" th:title="${o.observacao}"></span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="dd-acao" title="Editar orçamento"
+                                    data-bs-toggle="collapse" th:data-bs-target="'#editOrc' + ${o.id}">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                            </button>
+                            <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/excluir(devId=${dev.id},orcId=${o.id})}"
+                                  method="post" class="d-inline"
+                                  th:attr="data-forn=${o.fornecedor ?: '(sem fornecedor)'}"
+                                  onsubmit="return confirm('Excluir o orçamento de ' + this.dataset.forn + '?\nO registro continua no histórico.')">
+                                <button class="dd-acao perigo" title="Excluir orçamento">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <table class="dd-tabela">
+                            <thead>
+                                <tr>
+                                    <th th:if="${o.temFaixa}">Quantidade</th>
+                                    <th class="num" th:each="t : ${o.tamanhosGrade}" th:text="${t.isEmpty() ? 'Preço' : t}"></th>
                                 </tr>
-                                <tr th:id="'editOrc' + ${o.id}" class="collapse edicao">
-                                    <td colspan="7">
-                                        <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}"
-                                              method="post" class="dd-linha dd-orc-form">
-                                            <div>
-                                                <label class="dd-label">Fornecedor</label>
-                                                <select name="fornecedor" class="form-select form-select-sm">
-                                                    <option value="">(nenhum)</option>
-                                                    <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"
-                                                            th:selected="${f.nome == o.fornecedor}"></option>
-                                                </select>
-                                            </div>
-                                            <div><label class="dd-label">Tam. 1</label>
-                                                <input type="text" name="tamanho" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho}"/></div>
-                                            <div><label class="dd-label">Preço 1</label>
-                                                <input type="number" name="valor" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor}"/></div>
-                                            <div><label class="dd-label">Tam. 2</label>
-                                                <input type="text" name="tamanho2" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho2}"/></div>
-                                            <div><label class="dd-label">Preço 2</label>
-                                                <input type="number" name="valor2" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor2}"/></div>
-                                            <div><label class="dd-label">Tam. 3</label>
-                                                <input type="text" name="tamanho3" class="form-control form-control-sm uppercase-input" th:value="${o.tamanho3}"/></div>
-                                            <div><label class="dd-label">Preço 3</label>
-                                                <input type="number" name="valor3" step="0.0001" class="input-reais form-control form-control-sm" th:value="${o.valor3}"/></div>
-                                            <div><label class="dd-label">Qtd</label>
-                                                <input type="number" name="quantidade" class="form-control form-control-sm" th:value="${o.quantidade}"/></div>
-                                            <div class="larga"><label class="dd-label">Observação</label>
-                                                <input type="text" name="observacao" class="form-control form-control-sm uppercase-input" th:value="${o.observacao}"/></div>
-                                            <button class="dd-btn-primary sm">Salvar</button>
-                                        </form>
-                                    </td>
+                            </thead>
+                            <tbody>
+                                <tr th:each="q : ${o.faixasGrade}">
+                                    <td th:if="${o.temFaixa}"
+                                        th:text="${q == null ? '—' : #numbers.formatInteger(q, 1, 'POINT')}"></td>
+                                    <td class="num" th:each="t, ts : ${o.tamanhosGrade}"
+                                        th:with="v=${o.getPrecoCelula(q, ts.index)}"
+                                        th:text="${v != null ? 'R$ ' + #numbers.formatDecimal(v, 1, 'POINT', 4, 'COMMA') : '-'}"></td>
                                 </tr>
-                            </th:block>
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Edição do orçamento -->
+                    <div th:id="'editOrc' + ${o.id}" class="collapse">
+                        <div class="dd-orc-edicao">
+                            <form th:action="@{/desenvolvimentos/{devId}/orcamento/{orcId}/editar(devId=${dev.id},orcId=${o.id})}" method="post">
+                                <div class="dd-linha dd-orc-topo">
+                                    <div>
+                                        <label class="dd-label">Fornecedor</label>
+                                        <select name="fornecedor" class="form-select form-select-sm">
+                                            <option value="">(nenhum)</option>
+                                            <option th:each="f : ${fornecedores}" th:value="${f.nome}" th:text="${f.nome}"
+                                                    th:selected="${f.nome == o.fornecedor}"></option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="dd-label">Observação</label>
+                                        <input type="text" name="observacao" class="form-control form-control-sm uppercase-input"
+                                               th:value="${o.observacao}"/>
+                                    </div>
+                                </div>
+                                <div class="dd-grade-precos" data-grade>
+                                    <span th:each="p : ${o.precos}" class="grade-ini" hidden
+                                          th:attr="data-c=${p.colunaTamanho},data-t=${p.tamanho},data-q=${p.quantidade},data-v=${p.valor}"></span>
+                                </div>
+                                <div class="dd-orc-rodape">
+                                    <button type="button" class="dd-btn-ghost" data-bs-toggle="collapse"
+                                            th:data-bs-target="'#editOrc' + ${o.id}">Cancelar</button>
+                                    <button class="dd-btn-primary sm">Salvar orçamento</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -437,7 +458,7 @@
                             <label class="dd-label">Preço inicial</label>
                             <input type="number" name="precoInicial" id="negPrecoInicial"
                                    step="0.0001" class="input-reais form-control"
-                                   th:value="${dev.precoInicial != null ? dev.precoInicial : precoInicialSugerido}"
+                                   th:value="${dev.precoInicial}"
                                    placeholder="0,0000"/>
                         </div>
                         <div>
@@ -523,6 +544,92 @@
     }
     tipoSelect.addEventListener('change', atualizar);
     atualizar();
+}());
+
+// Grade de preços do orçamento: até 3 tamanhos (colunas) × faixas de quantidade (linhas).
+// Envia: colunas, linhas, tam{c}, faixa{r}, p_{r}_{c}.
+(function () {
+    const MAX_TAMANHOS = 3;
+    const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+    function iniciar(box) {
+        // estado inicial a partir dos preços já gravados (edição) ou grade vazia 1×1 (novo)
+        const ini = Array.from(box.querySelectorAll('.grade-ini')).map(s => ({
+            c: parseInt(s.dataset.c || '0', 10), t: s.dataset.t || '', q: s.dataset.q || '', v: s.dataset.v || ''
+        }));
+        const nCols = Math.max(1, ...ini.map(p => p.c + 1));
+        const tams = Array.from({ length: nCols }, (_, c) => (ini.find(p => p.c === c && p.t) || {}).t || '');
+        const faixas = [...new Set(ini.map(p => p.q))].sort((a, b) => (a === '' ? -1 : b === '' ? 1 : a - b));
+        if (!faixas.length) faixas.push('');
+        const precos = faixas.map(q => tams.map((_, c) => {
+            const p = ini.find(x => x.q === q && x.c === c);
+            return p && p.v !== '' ? Number(p.v).toFixed(4) : '';
+        }));
+        const st = { tams, faixas, precos };
+
+        function lerTela() {
+            box.querySelectorAll('[data-tam]').forEach(i => st.tams[+i.dataset.tam] = i.value);
+            box.querySelectorAll('[data-faixa]').forEach(i => st.faixas[+i.dataset.faixa] = i.value);
+            box.querySelectorAll('[data-preco]').forEach(i => {
+                const [r, c] = i.dataset.preco.split('_').map(Number);
+                st.precos[r][c] = i.value;
+            });
+        }
+
+        function desenhar() {
+            const nC = st.tams.length, nR = st.faixas.length;
+            let h = '<table class="dd-grade-ed"><thead><tr><th>Quantidade</th>';
+            st.tams.forEach((_, c) => {
+                h += '<th>Tamanho ' + (c + 1) + (nC > 1 ? ' <button type="button" class="dd-rem" data-rem-col="' + c + '" title="Remover tamanho">✕</button>' : '') + '</th>';
+            });
+            h += '<th class="ctrl"></th></tr><tr><td class="faixa canto">preço por faixa ↓ · tamanho →</td>';
+            st.tams.forEach((t, c) => {
+                h += '<td><input type="text" class="form-control form-control-sm uppercase-input" name="tam' + c + '" data-tam="' + c +
+                     '" value="' + esc(t) + '" placeholder="sem tamanho"/></td>';
+            });
+            h += '<td class="ctrl">' + (nC < MAX_TAMANHOS ? '<button type="button" class="dd-add" data-add-col>+ tamanho</button>' : '') + '</td></tr></thead><tbody>';
+            st.faixas.forEach((q, r) => {
+                h += '<tr><td class="faixa"><input type="number" min="1" step="1" class="form-control form-control-sm" name="faixa' + r +
+                     '" data-faixa="' + r + '" value="' + esc(q) + '" placeholder="sem faixa"/></td>';
+                st.tams.forEach((_, c) => {
+                    h += '<td class="num"><div class="input-group input-group-sm"><span class="input-group-text">R$</span>' +
+                         '<input type="number" step="0.0001" min="0" class="form-control" name="p_' + r + '_' + c + '" data-preco="' + r + '_' + c +
+                         '" value="' + esc(st.precos[r][c]) + '" placeholder="0,0000"/></div></td>';
+                });
+                h += '<td class="ctrl">' + (nR > 1 ? '<button type="button" class="dd-rem" data-rem-row="' + r + '" title="Remover faixa">✕</button>' : '') + '</td></tr>';
+            });
+            h += '<tr><td colspan="' + (nC + 2) + '"><button type="button" class="dd-add" data-add-row>+ faixa de quantidade</button></td></tr>';
+            h += '</tbody></table>';
+            h += '<input type="hidden" name="colunas" value="' + nC + '"/><input type="hidden" name="linhas" value="' + nR + '"/>';
+            h += '<div class="dd-grade-ajuda">Até 3 tamanhos. Deixe o tamanho em branco para preço sem tamanho e a quantidade em branco para preço sem escalonamento.</div>';
+            box.innerHTML = h;
+        }
+
+        box.addEventListener('click', e => {
+            const b = e.target.closest('button');
+            if (!b || !box.contains(b)) return;
+            lerTela();
+            if (b.hasAttribute('data-add-col') && st.tams.length < MAX_TAMANHOS) {
+                st.tams.push(''); st.precos.forEach(l => l.push(''));
+            } else if (b.hasAttribute('data-add-row')) {
+                st.faixas.push(''); st.precos.push(st.tams.map(() => ''));
+            } else if (b.dataset.remCol !== undefined) {
+                const c = +b.dataset.remCol; st.tams.splice(c, 1); st.precos.forEach(l => l.splice(c, 1));
+            } else if (b.dataset.remRow !== undefined) {
+                const r = +b.dataset.remRow; st.faixas.splice(r, 1); st.precos.splice(r, 1);
+            } else return;
+            desenhar();
+        });
+        // preço sempre com 4 casas ao sair do campo
+        box.addEventListener('change', e => {
+            if (e.target.matches('[data-preco]') && e.target.value !== '' && !isNaN(Number(e.target.value))) {
+                e.target.value = Number(e.target.value).toFixed(4);
+            }
+        });
+        desenhar();
+    }
+
+    document.querySelectorAll('[data-grade]').forEach(iniciar);
 }());
 
 // Negociação: indicadores calculados em tempo real

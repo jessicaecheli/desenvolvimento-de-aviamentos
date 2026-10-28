@@ -196,20 +196,16 @@ public class DesenvolvimentoController {
             return "desenvolvimentos/detalhe-tecido";
         }
 
-        List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
+        List<Orcamento> orcamentos = orcamentoRepository.findAtivosByDesenvolvimentoId(id);
         Orcamento melhorOrcamento = orcamentos.stream()
-            .filter(o -> o.getValorMinimo() != null)
-            .min(Comparator.comparing(Orcamento::getValorMinimo))
+            .filter(o -> o.getPrecoReferencia() != null)
+            .min(Comparator.comparing(Orcamento::getPrecoReferencia))
             .orElse(null);
         Long menorOrcamentoId = melhorOrcamento != null ? melhorOrcamento.getId() : null;
-        BigDecimal precoInicialSugerido = dev.getPrecoInicial() != null
-            ? dev.getPrecoInicial()
-            : (melhorOrcamento != null ? melhorOrcamento.getValorMinimo() : null);
         model.addAttribute("orcamentos", orcamentos);
         model.addAttribute("menorOrcamentoId", menorOrcamentoId);
-        model.addAttribute("totalOrcamentos", orcamentoRepository.countByDesenvolvimentoId(id));
+        model.addAttribute("totalOrcamentos", orcamentoRepository.countAtivosByDesenvolvimentoId(id));
         model.addAttribute("fornecedores", fornecedorService.listarTodos());
-        model.addAttribute("precoInicialSugerido", precoInicialSugerido);
         return "desenvolvimentos/detalhe";
     }
 
@@ -333,34 +329,72 @@ public class DesenvolvimentoController {
         return "redirect:/desenvolvimentos/" + id;
     }
 
+    /**
+     * Lê a grade de preços enviada pelo formulário do orçamento:
+     * colunas (1–3) com rótulos tam{c}; linhas com faixa{r} (quantidade, opcional); células p_{r}_{c}.
+     */
+    private List<OrcamentoPreco> lerGradePrecos(Map<String, String> p) {
+        int colunas = Math.min(Orcamento.MAX_TAMANHOS, Math.max(1, parseIntOuZero(p.get("colunas"))));
+        int linhas = Math.max(1, parseIntOuZero(p.get("linhas")));
+        List<String> tamanhos = new ArrayList<>();
+        for (int c = 0; c < colunas; c++) {
+            String t = p.getOrDefault("tam" + c, "").trim().toUpperCase();
+            if (!t.isEmpty() && tamanhos.contains(t)) throw new IllegalArgumentException("Tamanho \"" + t + "\" repetido na grade.");
+            tamanhos.add(t);
+        }
+        List<Integer> faixas = new ArrayList<>();
+        List<OrcamentoPreco> precos = new ArrayList<>();
+        for (int r = 0; r < linhas; r++) {
+            String fx = p.getOrDefault("faixa" + r, "").replace(".", "").trim();
+            Integer qtd = fx.isEmpty() ? null : Integer.valueOf(fx);
+            boolean linhaTemPreco = false;
+            for (int c = 0; c < colunas; c++) {
+                String v = p.getOrDefault("p_" + r + "_" + c, "").trim().replace(',', '.');
+                if (v.isEmpty()) continue;
+                precos.add(new OrcamentoPreco(null, c, tamanhos.get(c).isEmpty() ? null : tamanhos.get(c), qtd, new BigDecimal(v)));
+                linhaTemPreco = true;
+            }
+            if (linhaTemPreco) {
+                if (faixas.contains(qtd)) throw new IllegalArgumentException("Faixa de quantidade repetida na grade.");
+                faixas.add(qtd);
+            }
+        }
+        if (precos.isEmpty()) throw new IllegalArgumentException("Informe pelo menos um preço no orçamento.");
+        return precos;
+    }
+
+    /** Observação da etapa cabe em 255 caracteres no banco. */
+    private static String limitarObs(String s) {
+        return s.length() <= 255 ? s : s.substring(0, 252) + "...";
+    }
+
+    private static int parseIntOuZero(String s) {
+        try { return s == null ? 0 : Integer.parseInt(s.trim()); } catch (NumberFormatException e) { return 0; }
+    }
+
     @PostMapping("/{id}/orcamento")
     public String adicionarOrcamento(@PathVariable Long id,
                                       @RequestParam(required = false) String fornecedor,
-                                      @RequestParam(required = false) String tamanho,
-                                      @RequestParam(required = false) String tamanho2,
-                                      @RequestParam(required = false) String tamanho3,
-                                      @RequestParam(required = false) BigDecimal valor,
-                                      @RequestParam(required = false) BigDecimal valor2,
-                                      @RequestParam(required = false) BigDecimal valor3,
-                                      @RequestParam(required = false) Integer quantidade,
                                       @RequestParam(required = false) String observacao,
+                                      @RequestParam Map<String, String> params,
                                       RedirectAttributes ra) {
-        if (orcamentoRepository.countByDesenvolvimentoId(id) >= 4) {
+        if (orcamentoRepository.countAtivosByDesenvolvimentoId(id) >= 4) {
             ra.addFlashAttribute("erro", "Limite de 4 orçamentos atingido.");
+            return "redirect:/desenvolvimentos/" + id;
+        }
+        List<OrcamentoPreco> precos;
+        try {
+            precos = lerGradePrecos(params);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
             return "redirect:/desenvolvimentos/" + id;
         }
         Desenvolvimento dev = service.buscarPorId(id);
         Orcamento orc = new Orcamento();
         orc.setDesenvolvimento(dev);
         orc.setFornecedor(fornecedor);
-        orc.setTamanho(tamanho);
-        orc.setTamanho2(tamanho2);
-        orc.setTamanho3(tamanho3);
-        orc.setValor(valor);
-        orc.setValor2(valor2);
-        orc.setValor3(valor3);
-        orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
+        orc.substituirPrecos(precos);
         orcamentoRepository.save(orc);
         EtapaDesenvolvimento etapaOrc = new EtapaDesenvolvimento();
         etapaOrc.setDesenvolvimento(dev);
@@ -376,26 +410,21 @@ public class DesenvolvimentoController {
     public String editarOrcamento(@PathVariable Long devId,
                                    @PathVariable Long orcId,
                                    @RequestParam(required = false) String fornecedor,
-                                   @RequestParam(required = false) String tamanho,
-                                   @RequestParam(required = false) String tamanho2,
-                                   @RequestParam(required = false) String tamanho3,
-                                   @RequestParam(required = false) BigDecimal valor,
-                                   @RequestParam(required = false) BigDecimal valor2,
-                                   @RequestParam(required = false) BigDecimal valor3,
-                                   @RequestParam(required = false) Integer quantidade,
                                    @RequestParam(required = false) String observacao,
+                                   @RequestParam Map<String, String> params,
                                    RedirectAttributes ra) {
         Orcamento orc = orcamentoRepository.findById(orcId)
             .orElseThrow(() -> new IllegalArgumentException("Orçamento não encontrado: " + orcId));
+        List<OrcamentoPreco> precos;
+        try {
+            precos = lerGradePrecos(params);
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("erro", e.getMessage());
+            return "redirect:/desenvolvimentos/" + devId;
+        }
         orc.setFornecedor(fornecedor);
-        orc.setTamanho(tamanho);
-        orc.setTamanho2(tamanho2);
-        orc.setTamanho3(tamanho3);
-        orc.setValor(valor);
-        orc.setValor2(valor2);
-        orc.setValor3(valor3);
-        orc.setQuantidade(quantidade);
         orc.setObservacao(observacao);
+        orc.substituirPrecos(precos);
         orcamentoRepository.save(orc);
         Desenvolvimento devOrc = service.buscarPorId(devId);
         EtapaDesenvolvimento etapaAlteracao = new EtapaDesenvolvimento();
@@ -404,30 +433,50 @@ public class DesenvolvimentoController {
         etapaAlteracao.setDataOcorrencia(LocalDate.now());
         StringBuilder obsAlteracao = new StringBuilder("ALTERAÇÃO - ");
         obsAlteracao.append(fornecedor != null && !fornecedor.isBlank() ? fornecedor : "(sem fornecedor)");
-        if (tamanho != null && !tamanho.isBlank()) {
-            obsAlteracao.append(" | ").append(tamanho);
-            if (valor != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor).replace('.', ','));
-        }
-        if (tamanho2 != null && !tamanho2.isBlank()) {
-            obsAlteracao.append(" | ").append(tamanho2);
-            if (valor2 != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor2).replace('.', ','));
-        }
-        if (tamanho3 != null && !tamanho3.isBlank()) {
-            obsAlteracao.append(" | ").append(tamanho3);
-            if (valor3 != null) obsAlteracao.append(": R$ ").append(String.format("%.4f", valor3).replace('.', ','));
-        }
-        if (quantidade != null) obsAlteracao.append(" | Qtd: ").append(quantidade);
+        String resumo = orc.getResumoPrecos();
+        if (!resumo.isBlank()) obsAlteracao.append(" | ").append(resumo);
         if (observacao != null && !observacao.isBlank()) obsAlteracao.append(" | ").append(observacao);
-        etapaAlteracao.setObservacao(obsAlteracao.toString());
+        etapaAlteracao.setObservacao(limitarObs(obsAlteracao.toString()));
         etapaRepository.save(etapaAlteracao);
         ra.addFlashAttribute("sucesso", "Orçamento atualizado.");
+        return "redirect:/desenvolvimentos/" + devId;
+    }
+
+    /**
+     * Exclusão lógica do orçamento: sai da tela e da contagem, mas continua no banco para que as
+     * etapas do histórico que apontam para ele mantenham o fornecedor. A exclusão é registrada no histórico.
+     */
+    @PostMapping("/{devId}/orcamento/{orcId}/excluir")
+    public String excluirOrcamento(@PathVariable Long devId, @PathVariable Long orcId, RedirectAttributes ra) {
+        Orcamento orc = orcamentoRepository.findById(orcId)
+            .filter(o -> o.getDesenvolvimento().getId().equals(devId) && !o.isExcluido())
+            .orElse(null);
+        if (orc == null) {
+            ra.addFlashAttribute("erro", "Orçamento não encontrado.");
+            return "redirect:/desenvolvimentos/" + devId;
+        }
+        orc.setExcluido(true);
+        orcamentoRepository.save(orc);
+
+        EtapaDesenvolvimento etapaExclusao = new EtapaDesenvolvimento();
+        etapaExclusao.setDesenvolvimento(orc.getDesenvolvimento());
+        etapaExclusao.setTipo(TipoEtapa.ORCAMENTO);
+        etapaExclusao.setDataOcorrencia(LocalDate.now());
+        StringBuilder obs = new StringBuilder("EXCLUSÃO - ");
+        obs.append(orc.getFornecedor() != null && !orc.getFornecedor().isBlank() ? orc.getFornecedor() : "(sem fornecedor)");
+        String resumo = orc.getResumoPrecos();
+        if (!resumo.isBlank()) obs.append(" | ").append(resumo);
+        etapaExclusao.setObservacao(limitarObs(obs.toString()));
+        etapaRepository.save(etapaExclusao);
+
+        ra.addFlashAttribute("sucesso", "Orçamento excluído. O registro foi mantido no histórico.");
         return "redirect:/desenvolvimentos/" + devId;
     }
 
     @GetMapping("/{id}/ficha")
     public String ficha(@PathVariable Long id, Model model) {
         Desenvolvimento dev = service.buscarPorId(id);
-        List<Orcamento> orcamentos = orcamentoRepository.findByDesenvolvimentoIdOrderByIdAsc(id);
+        List<Orcamento> orcamentos = orcamentoRepository.findAtivosByDesenvolvimentoId(id);
         List<EtapaDesenvolvimento> etapas = etapaRepository.findByDesenvolvimentoIdOrderByDataOcorrenciaAscIdAsc(id);
         EtapaDesenvolvimento etapaAprovado = etapas.stream()
             .filter(e -> e.getTipo() == TipoEtapa.APROVADO)

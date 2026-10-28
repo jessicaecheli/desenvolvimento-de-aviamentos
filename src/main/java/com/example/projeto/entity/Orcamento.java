@@ -2,13 +2,22 @@ package com.example.projeto.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
+/**
+ * Orçamento de um fornecedor. Os preços ficam numa grade dinâmica (OrcamentoPreco):
+ * até 3 tamanhos (colunas) × faixas de quantidade (linhas).
+ * As colunas antigas tamanho/tamanho2/tamanho3, valor/valor2/valor3 e quantidade
+ * permanecem no banco sem uso (migradas por MigracaoPrecosOrcamento).
+ */
 @Entity
 @Table(name = "orcamento")
 public class Orcamento {
+
+    public static final int MAX_TAMANHOS = 3;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,22 +29,15 @@ public class Orcamento {
 
     private String fornecedor;
 
-    private String tamanho;
-    private String tamanho2;
-    private String tamanho3;
-
-    @Column(precision = 19, scale = 4)
-    private BigDecimal valor;
-
-    @Column(precision = 19, scale = 4)
-    private BigDecimal valor2;
-
-    @Column(precision = 19, scale = 4)
-    private BigDecimal valor3;
-
-    private Integer quantidade;
-
     private String observacao;
+
+    /** Exclusão lógica: some da tela, mas continua no banco para o histórico das etapas. */
+    @Column(name = "excluido", columnDefinition = "boolean default false")
+    private Boolean excluido = false;
+
+    @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("quantidade ASC, colunaTamanho ASC")
+    private List<OrcamentoPreco> precos = new ArrayList<>();
 
     public Orcamento() {}
 
@@ -45,52 +47,86 @@ public class Orcamento {
     public void setDesenvolvimento(Desenvolvimento desenvolvimento) { this.desenvolvimento = desenvolvimento; }
     public String getFornecedor() { return fornecedor; }
     public void setFornecedor(String fornecedor) { this.fornecedor = fornecedor; }
-    public String getTamanho() { return tamanho; }
-    public void setTamanho(String tamanho) { this.tamanho = tamanho; }
-    public String getTamanho2() { return tamanho2; }
-    public void setTamanho2(String tamanho2) { this.tamanho2 = tamanho2; }
-    public String getTamanho3() { return tamanho3; }
-    public void setTamanho3(String tamanho3) { this.tamanho3 = tamanho3; }
-    public String getTamanhosConcatenados() {
-        StringBuilder sb = new StringBuilder();
-        if (tamanho  != null && !tamanho.isBlank())  sb.append(tamanho);
-        if (tamanho2 != null && !tamanho2.isBlank()) { if (!sb.isEmpty()) sb.append(", "); sb.append(tamanho2); }
-        if (tamanho3 != null && !tamanho3.isBlank()) { if (!sb.isEmpty()) sb.append(", "); sb.append(tamanho3); }
-        return sb.toString();
-    }
-    public BigDecimal getValor() { return valor; }
-    public void setValor(BigDecimal valor) { this.valor = valor; }
-    public BigDecimal getValor2() { return valor2; }
-    public void setValor2(BigDecimal valor2) { this.valor2 = valor2; }
-    public BigDecimal getValor3() { return valor3; }
-    public void setValor3(BigDecimal valor3) { this.valor3 = valor3; }
-    public String getResumoTamanhos() {
-        StringBuilder sb = new StringBuilder();
-        if (tamanho != null && !tamanho.isBlank()) {
-            sb.append(tamanho);
-            if (valor != null) sb.append(": R$ ").append(String.format("%.4f", valor).replace('.', ','));
-        }
-        if (tamanho2 != null && !tamanho2.isBlank()) {
-            if (!sb.isEmpty()) sb.append(" | ");
-            sb.append(tamanho2);
-            if (valor2 != null) sb.append(": R$ ").append(String.format("%.4f", valor2).replace('.', ','));
-        }
-        if (tamanho3 != null && !tamanho3.isBlank()) {
-            if (!sb.isEmpty()) sb.append(" | ");
-            sb.append(tamanho3);
-            if (valor3 != null) sb.append(": R$ ").append(String.format("%.4f", valor3).replace('.', ','));
-        }
-        return sb.toString();
-    }
-    public Integer getQuantidade() { return quantidade; }
-    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }
+    public boolean isExcluido() { return Boolean.TRUE.equals(excluido); }
+    public void setExcluido(boolean excluido) { this.excluido = excluido; }
+    public List<OrcamentoPreco> getPrecos() { return precos; }
+    public void setPrecos(List<OrcamentoPreco> precos) { this.precos = precos; }
 
-    public BigDecimal getValorMinimo() {
-        return Stream.of(valor, valor2, valor3)
-            .filter(Objects::nonNull)
-            .min(Comparator.naturalOrder())
-            .orElse(null);
+    /** Substitui toda a grade de preços. */
+    public void substituirPrecos(List<OrcamentoPreco> novos) {
+        precos.clear();
+        novos.forEach(p -> { p.setOrcamento(this); precos.add(p); });
+    }
+
+    // ── Leitura da grade ──────────────────────────────────────────────
+
+    /** Rótulos das colunas de tamanho, na ordem (vazio quando a coluna não tem tamanho). */
+    public List<String> getTamanhosGrade() {
+        int colunas = precos.stream().mapToInt(OrcamentoPreco::getColunaTamanho).max().orElse(0) + 1;
+        List<String> rotulos = new ArrayList<>();
+        for (int c = 0; c < colunas; c++) {
+            final int col = c;
+            rotulos.add(precos.stream()
+                .filter(p -> p.getColunaTamanho() == col && p.getTamanho() != null && !p.getTamanho().isBlank())
+                .map(OrcamentoPreco::getTamanho).findFirst().orElse(""));
+        }
+        return rotulos;
+    }
+
+    /** Faixas de quantidade, em ordem crescente (null = sem faixa, vem primeiro). */
+    public List<Integer> getFaixasGrade() {
+        List<Integer> faixas = new ArrayList<>();
+        precos.stream().map(OrcamentoPreco::getQuantidade).distinct()
+            .sorted(Comparator.nullsFirst(Comparator.naturalOrder()))
+            .forEach(faixas::add);
+        if (faixas.isEmpty()) faixas.add(null);
+        return faixas;
+    }
+
+    public BigDecimal getPrecoCelula(Integer quantidade, int coluna) {
+        return precos.stream()
+            .filter(p -> Objects.equals(p.getQuantidade(), quantidade) && p.getColunaTamanho() == coluna)
+            .map(OrcamentoPreco::getValor).filter(Objects::nonNull).findFirst().orElse(null);
+    }
+
+    public boolean isTemTamanho() { return getTamanhosGrade().stream().anyMatch(t -> !t.isBlank()); }
+    public boolean isTemFaixa() { return precos.stream().anyMatch(p -> p.getQuantidade() != null); }
+
+    /** Menor quantidade informada nas faixas (para a ficha técnica). */
+    public Integer getQuantidadeMinima() {
+        return precos.stream().map(OrcamentoPreco::getQuantidade).filter(Objects::nonNull)
+            .min(Comparator.naturalOrder()).orElse(null);
+    }
+
+    /**
+     * Preço de referência para comparar orçamentos: o menor preço da menor faixa de quantidade
+     * (a primeira faixa que tenha algum preço).
+     */
+    public BigDecimal getPrecoReferencia() {
+        for (Integer faixa : getFaixasGrade()) {
+            BigDecimal menor = precos.stream()
+                .filter(p -> Objects.equals(p.getQuantidade(), faixa) && p.getValor() != null)
+                .map(OrcamentoPreco::getValor).min(Comparator.naturalOrder()).orElse(null);
+            if (menor != null) return menor;
+        }
+        return null;
+    }
+
+    /** Resumo em texto para o histórico (ex.: "SS16 / 500: R$ 1,0000 | ..."). */
+    public String getResumoPrecos() {
+        List<String> tamanhos = getTamanhosGrade();
+        List<String> partes = new ArrayList<>();
+        for (OrcamentoPreco p : precos) {
+            if (p.getValor() == null) continue;
+            List<String> rotulo = new ArrayList<>();
+            String tam = p.getColunaTamanho() < tamanhos.size() ? tamanhos.get(p.getColunaTamanho()) : "";
+            if (!tam.isBlank()) rotulo.add(tam);
+            if (p.getQuantidade() != null) rotulo.add(String.valueOf(p.getQuantidade()));
+            String preco = "R$ " + String.format("%.4f", p.getValor()).replace('.', ',');
+            partes.add(rotulo.isEmpty() ? preco : String.join(" / ", rotulo) + ": " + preco);
+        }
+        return String.join(" | ", partes);
     }
 }

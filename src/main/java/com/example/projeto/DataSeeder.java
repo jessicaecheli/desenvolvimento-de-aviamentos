@@ -239,12 +239,9 @@ public class DataSeeder implements CommandLineRunner {
         Orcamento o = new Orcamento();
         o.setDesenvolvimento(dev);
         o.setFornecedor(fornecedor);
-        o.setTamanho(t1);
-        o.setTamanho2(t2);
-        o.setTamanho3(t3);
-        o.setValor(valor);
-        o.setQuantidade(qtd);
         o.setObservacao(obs);
+        // grade de preços: o valor de demonstração vale para o 1º tamanho, na faixa da qtd informada
+        o.substituirPrecos(java.util.List.of(new OrcamentoPreco(o, 0, t1, qtd, valor)));
         orcRepo.save(o);
     }
 }
