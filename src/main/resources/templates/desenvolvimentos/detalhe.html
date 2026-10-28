@@ -300,9 +300,9 @@
                                     </option>
                                 </select>
                             </div>
-                            <!-- Custo da amostra recebida — aparece e é obrigatório só para LIBERADA (Ag. Aprovação) -->
+                            <!-- Custo da amostra recebida — aparece só para LIBERADA (Ag. Aprovação); opcional, nem toda amostra é cobrada -->
                             <div id="campoCustoAmostra" style="display:none">
-                                <label class="dd-label">Custo da amostra recebida *</label>
+                                <label class="dd-label">Custo da amostra recebida</label>
                                 <input type="number" name="custoAmostra" step="0.0001" class="input-reais form-control" placeholder="0,0000"/>
                             </div>
                             <!-- Motivo da alteração — aparece só para ALTERACAO -->
@@ -550,7 +550,6 @@
         campoOrc.style.display   = tiposComOrc.includes(tipoSelect.value) ? '' : 'none';
         const isLib = tipoSelect.value === 'LIBERADA';
         campoCusto.style.display = isLib ? '' : 'none';
-        campoCusto.querySelector('input').required = isLib;
         const isAlt = tipoSelect.value === 'ALTERACAO';
         campoMotivo.style.display = isAlt ? '' : 'none';
         selMotivo.required = isAlt;

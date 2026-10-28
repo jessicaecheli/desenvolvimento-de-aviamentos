@@ -312,11 +312,6 @@ public class DesenvolvimentoController {
             ra.addFlashAttribute("erro", "Informe o motivo da alteração (estilo ou divergência do fornecedor).");
             return "redirect:/desenvolvimentos/" + id;
         }
-        // Aviamento: o custo da amostra é informado quando a amostra é recebida (etapa Ag. Aprovação)
-        if (tipo == TipoEtapa.LIBERADA && custoAmostra == null && !service.isTecido(service.buscarPorId(id))) {
-            ra.addFlashAttribute("erro", "Informe o custo da amostra recebida.");
-            return "redirect:/desenvolvimentos/" + id;
-        }
         Orcamento orcamento = (orcamentoId != null) ? orcamentoRepository.findById(orcamentoId).orElse(null) : null;
         service.avancarEtapa(id, tipo, observacao, dataOcorrencia, orcamento, custoAmostra,
                 nf, valorFrete, valorAmostra, observacoesFaturamento, motivoAlteracao);
